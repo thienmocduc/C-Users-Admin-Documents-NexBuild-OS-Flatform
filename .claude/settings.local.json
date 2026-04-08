@@ -17,7 +17,24 @@
       "Bash(npm i:*)",
       "Bash(npx vercel:*)",
       "Bash(sed -n '8,475p' \"nexbuild-hub \\(8\\).html\")",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(pandoc \"C:/Users/Admin/Downloads/NexBuild-TaskOrder-HUB-001.docx\" -o nexbuild_task.md)",
+      "Bash(pip install:*)",
+      "Bash(where pandoc:*)",
+      "Bash(python -c ':*)",
+      "Bash(nslookup nexbuild.holdings)",
+      "Bash(curl -sI https://nexbuild.holdings/)",
+      "Bash(python -m pytest api/tests/ -v --tb=short)",
+      "Bash(python -c \"from passlib.context import CryptContext; ctx = CryptContext\\(schemes=['bcrypt'], deprecated='auto'\\); print\\(ctx.hash\\('test'\\)\\)\")",
+      "Bash(rm -f test.db)",
+      "Bash(python -m pytest api/tests/ -v --tb=line)",
+      "Bash(python -m pytest api/tests/ --cov=api --cov-report=term-missing --tb=short)",
+      "Bash(python -m pytest api/tests/ --tb=line -q)",
+      "Bash(python -m pytest api/tests/ --cov=api -q)",
+      "Bash(mkdir -p public)",
+      "Bash(cp \"C:/Users/Admin/Downloads/nexbuild-hub \\(9\\).html\" public/index.html)",
+      "Bash(cp \"C:/Users/Admin/Downloads/nexbuild-dashboard \\(3\\).html\" public/dashboard.html)",
+      "Bash(cp \"C:/Users/Admin/Downloads/nexbuild-marketplace \\(2\\).html\" public/marketplace.html)"
     ]
   }
 }

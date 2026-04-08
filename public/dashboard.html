@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NexBuild — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700;900&family=Noto+Sans+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--c1:#00C9A7;--c2:#0EA5E9;--ind:#6366F1;--vio:#A855F7;--gold:#C9A84C;--green:#22C55E;--red:#EF4444;--amb:#F59E0B;--or:#FB923C;--grad:linear-gradient(135deg,#00C9A7,#0EA5E9,#6366F1,#A855F7)}
+[data-theme="dark"]{--bg:#030609;--bg2:#050A14;--bg3:#080E1C;--text:#F2F7FF;--text2:#B0C8E4;--text3:#5A7898;--bdr:rgba(255,255,255,.08);--bdr2:rgba(255,255,255,.14);--sur:rgba(8,14,30,.96);--sur2:rgba(12,22,45,.98);--sb:rgba(4,7,16,.97)}
+[data-theme="light"]{--bg:#EEF2FF;--bg2:#F8F9FF;--bg3:#E4E9FF;--text:#0A1020;--text2:#2A3A58;--text3:#5A7898;--bdr:rgba(80,100,200,.1);--bdr2:rgba(80,100,200,.2);--sur:rgba(255,255,255,.97);--sur2:#fff;--sb:rgba(248,250,255,.98)}
+html,body{height:100%;font-family:"Noto Sans",sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+.orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0;animation:drift 14s ease-in-out infinite alternate;opacity:.25}
+.o1{width:700px;height:700px;background:#00C9A7;top:-20%;left:-15%;animation-delay:0s}
+.o2{width:560px;height:560px;background:#0EA5E9;top:25%;right:-15%;animation-delay:-4s}
+.o3{width:480px;height:480px;background:#6366F1;bottom:-15%;left:28%;animation-delay:-8s}
+.o4{width:380px;height:380px;background:#A855F7;top:45%;left:55%;animation-delay:-11s}
+@keyframes drift{0%{transform:translate(0,0) scale(1)}40%{transform:translate(28px,-38px) scale(1.07)}70%{transform:translate(-18px,26px) scale(.94)}100%{transform:translate(12px,18px) scale(1.04)}}
+[data-theme="light"] .orb{opacity:.07}
+#app{display:flex;height:100vh;overflow:hidden;position:relative;z-index:1}
+
+/* ── SIDEBAR ── */
+#sb{width:230px;flex-shrink:0;height:100vh;background:var(--sb);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow-y:auto;z-index:10}
+#sb::-webkit-scrollbar{width:3px}#sb::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08)}
+.sb-profile{padding:16px 14px;border-bottom:1px solid var(--bdr)}
+.sp-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sp-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;position:relative}
+.sp-dot{position:absolute;bottom:0;right:0;width:11px;height:11px;border-radius:50%;background:#22C55E;border:2px solid var(--sb)}
+.sp-name{font-weight:800;font-size:13px}
+.sp-id{font-family:"Noto Sans Mono",monospace;font-size:9px;font-weight:600;margin-top:1px}
+.sp-role{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:8px;font-size:10px;font-weight:700;border:1px solid;margin-top:6px}
+.sp-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sps{background:rgba(255,255,255,.04);border-radius:8px;padding:7px 9px;text-align:center}
+.sps-v{font-family:"Noto Sans Mono",monospace;font-size:13px;font-weight:800}
+.sps-l{font-size:9px;color:var(--text3);margin-top:1px}
+.sb-sec{padding:10px 14px 3px;font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.12em;text-transform:uppercase}
+.si{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:1px 6px;border-radius:9px;cursor:pointer;transition:all .2s;font-size:12px;font-weight:500;color:var(--text3);border:1px solid transparent;position:relative}
+.si:hover{background:rgba(255,255,255,.05);color:var(--text2)}
+.si.on{background:var(--si-bg,rgba(0,201,167,.08));border-color:var(--si-bdr,rgba(0,201,167,.2));color:var(--si-c,var(--c1));font-weight:700}
+.si-ic{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.si-b{margin-left:auto;font-size:9px;font-weight:700;padding:1px 6px;border-radius:6px;background:var(--si-bg,rgba(0,201,167,.12));color:var(--si-c,var(--c1));font-family:"Noto Sans Mono",monospace}
+.si-div{height:1px;background:var(--bdr);margin:5px 12px}
+.si-notif{width:7px;height:7px;border-radius:50%;background:var(--red);position:absolute;top:8px;right:8px}
+
+/* ── TOPBAR ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:50px;background:var(--sb);border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;padding:0 20px;flex-shrink:0}
+.tb-search{flex:1;max-width:380px;display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:9px;transition:all .2s}
+.tb-search:focus-within{border-color:rgba(0,201,167,.35)}
+.tb-search input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:12px;font-family:"Noto Sans",sans-serif}
+.tb-search input::placeholder{color:var(--text3)}
+.tb-acts{margin-left:auto;display:flex;gap:6px;align-items:center}
+.tba{height:30px;padding:0 12px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:"Noto Sans",sans-serif;transition:all .2s;border:1px solid var(--bdr2);background:transparent;color:var(--text2);display:flex;align-items:center;gap:5px}
+.tba:hover{border-color:var(--c1);color:var(--c1)}
+.tba-pri{background:var(--grad);border:none;color:#fff}
+.tba-ic{width:30px;height:30px;border-radius:8px;border:1px solid var(--bdr);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .2s}
+.tba-ic:hover{border-color:var(--c1);color:var(--c1)}
+.notif-dot{position:relative}.notif-dot::after{content:"";position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:var(--red);border:1.5px solid var(--sb)}
+
+/* ── PAGES ── */
+.pg{flex:1;overflow-y:auto;display:none;flex-direction:column}
+.pg.on{display:flex}
+.pg::-webkit-scrollbar{width:5px}.pg::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+.pg-inner{padding:20px;flex:1}
+
+/* ── ROLE SELECTOR ── */
+.role-select-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center}
+.rs-title{font-size:clamp(20px,3vw,32px);font-weight:900;margin-bottom:8px}
+.rs-title span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.rs-sub{font-size:13px;color:var(--text2);max-width:480px;margin:0 auto 32px;line-height:1.75}
+.role-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:680px;width:100%}
+.rc-sel{border-radius:16px;border:1px solid var(--bdr);background:var(--sur);padding:22px;cursor:pointer;transition:all .28s;position:relative;overflow:hidden;text-align:left}
+.rc-sel:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.rc-sel::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+.rc-sel-ico{font-size:36px;margin-bottom:12px}
+.rc-sel-name{font-weight:900;font-size:16px;margin-bottom:5px}
+.rc-sel-desc{font-size:11px;color:var(--text2);line-height:1.65;margin-bottom:12px}
+.rc-sel-tags{display:flex;gap:5px;flex-wrap:wrap}
+.rc-sel-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;border:1px solid}
+
+/* ── CARDS & GRID ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.card{background:var(--sur);border:1px solid var(--bdr);border-radius:14px;padding:16px}
+.card:hover{border-color:var(--bdr2)}
+.card-title{font-weight:800;font-size:13px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card-title-t{display:flex;align-items:center;gap:7px}
+
+/* ── STAT CARDS ── */
+.stat-card{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:14px;text-align:center}
+.stat-ico{font-size:22px;margin-bottom:6px}
+.stat-val{font-family:"Noto Sans Mono",monospace;font-size:20px;font-weight:800;line-height:1}
+.stat-lbl{font-size:10px;color:var(--text3);margin-top:4px}
+.stat-chg{font-size:10px;font-weight:700;margin-top:3px}
+.chg-up{color:var(--green)}.chg-dn{color:var(--red)}
+
+/* ── TABLES ── */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:8px 10px;text-align:left;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr);font-weight:700;background:rgba(255,255,255,.02)}
+td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.03)}
+
+/* ── PILLS ── */
+.pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:7px;font-size:9px;font-weight:700;border:1px solid}
+.p-t{background:rgba(0,201,167,.08);border-color:rgba(0,201,167,.2);color:var(--c1)}
+.p-b{background:rgba(14,165,233,.08);border-color:rgba(14,165,233,.2);color:var(--c2)}
+.p-i{background:rgba(99,102,241,.08);border-color:rgba(99,102,241,.2);color:var(--ind)}
+.p-v{background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.2);color:var(--vio)}
+.p-g{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2);color:var(--green)}
+.p-r{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.2);color:var(--red)}
+.p-gold{background:rgba(201,168,76,.08);border-color:rgba(201,168,76,.2);color:var(--gold)}
+.p-or{background:rgba(251,146,60,.08);border-color:rgba(251,146,60,.2);color:var(--or)}
+
+/* ── BUTTONS ── */
+.btn{height:34px;padding:0 16px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:"Noto Sans",sans-serif;transition:all .2s;border:none;display:inline-flex;align-items:center;gap:6px}
+.btn-pri{background:var(--grad);color:#fff}.btn-pri:hover{opacity:.88}
+.btn-teal{background:linear-gradient(135deg,#00C9A7,#0EA5E9);color:#fff}
+.btn-blue{background:linear-gradient(135deg,#0EA5E9,#6366F1);color:#fff}
+.btn-ind{background:linear-gradient(135deg,#6366F1,#A855F7);color:#fff}
+.btn-gold{background:linear-gradient(135deg,#C9A84C,#F59E0B);color:#fff}
+.btn-green{background:linear-gradient(135deg,#22C55E,#00C9A7);color:#fff}
+.btn-red{background:linear-gradient(135deg,#EF4444,#F59E0B);color:#fff}
+.btn-ghost{background:transparent;border:1px solid var(--bdr2);color:var(--text2)}.btn-ghost:hover{border-color:var(--c1);color:var(--c1)}
+.btn-sm{height:28px;padding:0 12px;font-size:11px;border-radius:7px}
+
+/* ── PROGRESS BAR ── */
+.prog-bar{height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width .6s ease}
+
+/* ── INPUT ── */
+.inp{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--bdr);background:rgba(255,255,255,.04);color:var(--text);font-size:12px;font-family:"Noto Sans",sans-serif;outline:none;transition:all .2s}
+.inp:focus{border-color:rgba(0,201,167,.4)}
+.inp-label{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:5px}
+.inp-group{margin-bottom:12px}
+
+/* ── MODAL ── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.modal-ov.open{display:flex}
+.modal-box{background:var(--bg3);border:1px solid var(--bdr2);border-radius:18px;width:500px;max-height:88vh;overflow-y:auto}
+.modal-hdr{padding:18px 22px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg3);z-index:2}
+.modal-title{font-weight:800;font-size:15px}
+.modal-close{width:30px;height:30px;border-radius:8px;border:1px solid var(--bdr);background:transparent;color:var(--text2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:18px 22px 22px}
+
+/* ── CHART MOCKUP ── */
+.chart-bars{display:flex;align-items:flex-end;gap:6px;height:80px;padding-top:8px}
+.cb{flex:1;border-radius:4px 4px 0 0;min-width:8px;transition:height .5s ease;cursor:pointer;opacity:.8}
+.cb:hover{opacity:1}
+.chart-labels{display:flex;gap:6px;margin-top:4px}
+.cl{flex:1;text-align:center;font-size:9px;color:var(--text3)}
+
+/* ── NOTIFICATION ITEM ── */
+.notif-item{display:flex;gap:10px;padding:10px;border-radius:9px;cursor:pointer;transition:all .2s;margin-bottom:6px;border:1px solid transparent}
+.notif-item:hover{background:rgba(255,255,255,.04);border-color:var(--bdr)}
+.notif-item.unread{background:rgba(0,201,167,.04);border-color:rgba(0,201,167,.1)}
+.ni-ico{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.ni-body{flex:1}
+.ni-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.ni-sub{font-size:11px;color:var(--text3)}
+.ni-time{font-size:9px;color:var(--text3);white-space:nowrap}
+
+/* ── PAYMENT METHOD ── */
+.pm-card{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.pm-card:hover{border-color:var(--bdr2)}
+.pm-card.on{border-color:rgba(0,201,167,.35);background:rgba(0,201,167,.05)}
+.pm-ico{width:40px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(3,6,9,.97);border:1px solid rgba(0,201,167,.3);border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;color:var(--c1);transition:transform .3s cubic-bezier(.34,1.2,.64,1);z-index:9999;pointer-events:none;white-space:nowrap}
+
+/* ── SECTION HEADER ── */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-title{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
+
+/* ── TIMELINE ── */
+.tl-item{display:flex;gap:12px;margin-bottom:14px;position:relative}
+.tl-item::before{content:"";position:absolute;left:15px;top:26px;bottom:-14px;width:2px;background:var(--bdr)}
+.tl-item:last-child::before{display:none}
+.tl-dot{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;position:relative;z-index:1}
+.tl-body{flex:1;padding-top:4px}
+.tl-title{font-size:12px;font-weight:700;margin-bottom:2px}
+.tl-sub{font-size:11px;color:var(--text3)}
+
+/* ── GPS MAP MOCK ── */
+.gps-map{background:linear-gradient(135deg,#0a1e2e,#0d2840,#082a20);border-radius:12px;height:140px;position:relative;overflow:hidden;border:1px solid var(--bdr)}
+.gps-pin{position:absolute;font-size:20px;animation:gpsping 2s ease infinite}
+@keyframes gpsping{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+.gps-overlay{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.5);padding:8px 12px;font-size:11px;color:rgba(255,255,255,.8);backdrop-filter:blur(6px)}
+
+/* ── SELLER ORDER CARD ── */
+.order-row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:1px solid var(--bdr);margin-bottom:8px;background:var(--sur);transition:all .2s}
+.order-row:hover{border-color:var(--bdr2)}
+
+@media(max-width:900px){#sb{display:none}#main{width:100%}.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr}.role-cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><div class="orb o4"></div>
+
+<!-- WITHDRAW MODAL -->
+<div class="modal-ov" id="withdrawModal">
+  <div class="modal-box">
+    <div class="modal-hdr"><div class="modal-title">💸 Rút tiền về tài khoản</div><button class="modal-close" onclick="closeModal('withdrawModal')">×</button></div>
+    <div class="modal-body">
+      <div style="background:rgba(0,201,167,.07);border:1px solid rgba(0,201,167,.18);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text2)">
+        <div style="font-family:'Noto Sans Mono',monospace;font-size:20px;font-weight:800;color:var(--c1);margin-bottom:4px">Số dư khả dụng: 24,650,000đ</div>
+        <div>Thời gian xử lý: T+1 ngày làm việc · Phí: Miễn phí</div>
+      </div>
+      <div class="inp-group"><label class="inp-label">Số tiền rút *</label><input class="inp" type="number" placeholder="Tối thiểu 100,000đ" id="withdrawAmt"></div>
+      <div style="margin-bottom:12px"><label class="inp-label">Tài khoản ngân hàng</label>
+        <div class="pm-card on" onclick="selPM(this)"><div class="pm-ico" style="background:rgba(14,165,233,.1)">🏦</div><div style="flex:1"><div style="font-size:12px;font-weight:700">Vietcombank · ****6868</div><div style="font-size:10px;color:var(--text3)">Nguyễn Văn A</div></div><span class="pill p-t">Mặc định</span></div>
+        <div class="pm-card" onclick="selPM(this)" style="margin-top:6px"><div class="pm-ico" style="background:rgba(251,146,60,.1)">💳</div><div style="flex:1"><div style="font-size:12px;font-weight:700">Techcombank · ****2244</div><div style="font-size:10px;color:var(--text3)">Nguyễn Văn A</div></div></div>
+        <button onclick="toast('Thêm tài khoản ngân hàng mới')" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px dashed var(--bdr2);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;font-family:'Noto Sans',sans-serif">+ Thêm tài khoản</button>
+      </div>
+      <div class="inp-group"><label class="inp-label">Ghi chú (tuỳ chọn)</label><input class="inp" placeholder="Tiền công tháng 4..."></div>
+      <button class="btn btn-teal" style="width:100%;justify-content:center;padding:12px" onclick="doWithdraw()">💸 Xác nhận rút tiền</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOPUP MODAL -->
+<div class="modal-ov" id="topupModal">
+  <div class="modal-box">
+    <div class="modal-hdr"><div class="modal-title">💰 Nạp tiền Escrow</div><button class="modal-close" onclick="closeModal('topupModal')">×</button></div>
+    <div class="modal-body">
+      <div class="inp-group"><label class="inp-label">Số tiền nạp</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+            <button onclick="document.getElementById('topupAmt').value=500000" style="padding:8px 12px;border-radius:8px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif">500K</button>
+            <button onclick="document.getElementById('topupAmt').value=1000000" style="padding:8px 12px;border-radius:8px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif">1M</button>
+            <button onclick="document.getElementById('topupAmt').value=2000000" style="padding:8px 12px;border-radius:8px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif">2M</button>
+            <button onclick="document.getElementById('topupAmt').value=5000000" style="padding:8px 12px;border-radius:8px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif">5M</button>
+            <button onclick="document.getElementById('topupAmt').value=10000000" style="padding:8px 12px;border-radius:8px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif">10M</button>
+            <button onclick="document.getElementById('topupAmt').value=20000000" style="padding:8px 12px;border-radius:8px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif">20M</button>
+          </div>
+        </div>
+        <input class="inp" type="number" id="topupAmt" placeholder="Hoặc nhập số tiền bất kỳ">
+      </div>
+      <div style="margin-bottom:14px"><label class="inp-label">Phương thức</label>
+        <div class="pm-card on" onclick="selPM(this)"><div class="pm-ico">💳</div><div style="flex:1"><div style="font-size:12px;font-weight:700">Thẻ ngân hàng</div><div style="font-size:10px;color:var(--text3)">Visa/Mastercard/JCB</div></div></div>
+        <div class="pm-card" style="margin-top:6px" onclick="selPM(this)"><div class="pm-ico">📱</div><div style="flex:1"><div style="font-size:12px;font-weight:700">VNPay</div><div style="font-size:10px;color:var(--text3)">Scan QR hoặc app VNPay</div></div></div>
+        <div class="pm-card" style="margin-top:6px" onclick="selPM(this)"><div class="pm-ico">🏦</div><div style="flex:1"><div style="font-size:12px;font-weight:700">Chuyển khoản</div><div style="font-size:10px;color:var(--text3)">Tức thì 24/7 tất cả ngân hàng</div></div></div>
+        <div class="pm-card" style="margin-top:6px" onclick="selPM(this)"><div class="pm-ico">💙</div><div style="flex:1"><div style="font-size:12px;font-weight:700">Zalo Pay</div><div style="font-size:10px;color:var(--text3)">Ví điện tử Zalo</div></div></div>
+      </div>
+      <div style="background:rgba(0,201,167,.06);border:1px solid rgba(0,201,167,.15);border-radius:9px;padding:10px;font-size:11px;color:var(--text2);margin-bottom:12px">🔒 Tiền Escrow được giữ an toàn bởi NexBuild · Chỉ xuất khi bạn xác nhận nhận hàng / hoàn thành công việc</div>
+      <button class="btn btn-teal" style="width:100%;justify-content:center;padding:12px" onclick="doTopup()">💰 Nạp tiền</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTRACT SIGN MODAL -->
+<div class="modal-ov" id="contractModal">
+  <div class="modal-box" style="width:580px">
+    <div class="modal-hdr"><div class="modal-title">📄 Hợp đồng thi công số</div><button class="modal-close" onclick="closeModal('contractModal')">×</button></div>
+    <div class="modal-body">
+      <div style="background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.18);border-radius:10px;padding:14px;margin-bottom:14px;font-size:12px;line-height:1.8;color:var(--text2)">
+        <div style="font-weight:800;font-size:13px;color:var(--ind);margin-bottom:8px">HỢP ĐỒNG THI CÔNG #CTR-2025-0892</div>
+        <div><strong>Chủ đầu tư:</strong> Nguyễn Văn A · CHN-1234</div>
+        <div><strong>Nhà thầu:</strong> CT Hoàng Gia · NHT-5678</div>
+        <div><strong>Công trình:</strong> Hoàn thiện nhà phố 3 tầng, Đống Đa, HN</div>
+        <div><strong>Giá trị hợp đồng:</strong> <span style="color:var(--c1);font-weight:700;font-family:'Noto Sans Mono',monospace">320,000,000đ</span></div>
+        <div><strong>Thời gian:</strong> 45 ngày · Bắt đầu ngay sau ký</div>
+        <div><strong>Thanh toán:</strong> 4 milestone × 80M đồng</div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bdr)"><strong>Milestone:</strong><br>
+          M1 (20%): Hoàn thành xây thô · 64M<br>M2 (30%): Hoàn thành điện nước · 96M<br>M3 (30%): Hoàn thành sơn nội thất · 96M<br>M4 (20%): Nghiệm thu bàn giao · 64M</div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bdr)"><strong>Bảo hành:</strong> 12 tháng · <strong>Phạt tiến độ:</strong> 0.1%/ngày trễ</div>
+      </div>
+      <div style="margin-bottom:14px"><label class="inp-label">Chữ ký điện tử</label>
+        <div style="border:1px solid var(--bdr2);border-radius:9px;height:80px;background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3);cursor:pointer;font-style:italic" onclick="toast('Ký điện tử bằng OTP SMS hoặc vân tay')">Ký tên điện tử tại đây / Tap to sign</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ind" style="flex:1;justify-content:center;padding:11px" onclick="closeModal('contractModal');toast('✅ Hợp đồng đã ký thành công! Escrow 80M được kích hoạt cho Milestone 1')">✅ Ký hợp đồng & Kích hoạt Escrow</button>
+        <button class="btn btn-ghost" style="padding:11px 16px" onclick="closeModal('contractModal')">Xem lại</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+<!-- ── SIDEBAR ── -->
+<div id="sb">
+  <div class="sb-profile">
+    <div class="sp-top">
+      <div class="sp-av" id="spAv" style="background:rgba(0,201,167,.15);border:2px solid rgba(0,201,167,.3)">👤<div class="sp-dot"></div></div>
+      <div style="flex:1">
+        <div class="sp-name" id="spName">Chưa đăng nhập</div>
+        <div class="sp-id" id="spId" style="color:var(--text3)">—</div>
+      </div>
+      <button class="tba-ic" onclick="toggleTheme()" id="themeBtn" style="border:none">☀️</button>
+    </div>
+    <div id="spRoleBadge"></div>
+    <div class="sp-stats" id="spStats" style="margin-top:8px"></div>
+  </div>
+  <div id="sbNav"></div>
+</div>
+
+<!-- ── MAIN ── -->
+<div id="main">
+  <div class="topbar">
+    <div class="tb-search">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" opacity=".5"><circle cx="5.5" cy="5.5" r="4" stroke="currentColor" stroke-width="1.2"/><path d="M9 9L11.5 11.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <input placeholder="Tìm kiếm trong dashboard...">
+    </div>
+    <div style="font-size:12px;color:var(--text3)" id="tbBreadcrumb">Dashboard</div>
+    <div class="tb-acts">
+      <button class="tba notif-dot" onclick="setPage('notif')">🔔</button>
+      <button class="tba" onclick="window.location.href='nexbuild-marketplace.html'">← NexMarket</button>
+      <button class="tba" onclick="window.location.href='nexbuild-hub.html'">⬡ Hub</button>
+      <button class="tba tba-pri" id="tbRoleBtn" onclick="showRoleSelect()">Chọn vai trò</button>
+    </div>
+  </div>
+
+  <!-- ROLE SELECT SCREEN -->
+  <div class="pg on" id="pg-role-select">
+    <div class="role-select-screen">
+      <div class="rs-title">Bạn là ai trên <span>NexBuild?</span></div>
+      <p class="rs-sub">Mỗi vai trò có dashboard riêng với tính năng phù hợp — chọn đúng để trải nghiệm đầy đủ nhất</p>
+      <div class="role-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:760px;width:100%">
+        <!-- ROW 1: 4 vai trò chính 2x2 -->
+        <div class="rc-sel" onclick="loginAs('buyer')" style="border-color:rgba(0,201,167,.2)">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#00C9A7,#0EA5E9)"></div>
+          <div class="rc-sel-ico">🏠</div>
+          <div class="rc-sel-name">Chủ nhà / CĐT</div>
+          <div class="rc-sel-desc">Tìm thợ, mua vật liệu, theo dõi công trình và quản lý Escrow</div>
+          <div class="rc-sel-tags">
+            <span class="rc-sel-tag p-t">Đặt thợ</span><span class="rc-sel-tag p-t">Mua vật liệu</span><span class="rc-sel-tag p-t">Escrow</span>
+          </div>
+        </div>
+
+        <div class="rc-sel" onclick="loginAs('worker')" style="border-color:rgba(14,165,233,.2)">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#0EA5E9,#6366F1)"></div>
+          <div class="rc-sel-ico">👷</div>
+          <div class="rc-sel-name">Thợ kỹ thuật</div>
+          <div class="rc-sel-desc">Nhận booking qua app, theo dõi lịch làm và thu nhập hàng ngày</div>
+          <div class="rc-sel-tags">
+            <span class="rc-sel-tag p-b">Nhận booking</span><span class="rc-sel-tag p-b">Lịch làm</span><span class="rc-sel-tag p-b">Thu nhập</span>
+          </div>
+        </div>
+
+        <div class="rc-sel" onclick="loginAs('contractor')" style="border-color:rgba(99,102,241,.2)">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#6366F1,#A855F7)"></div>
+          <div class="rc-sel-ico">🏗️</div>
+          <div class="rc-sel-name">Nhà thầu</div>
+          <div class="rc-sel-desc">Tìm công trình, đấu thầu, quản lý đội thợ và hợp đồng số</div>
+          <div class="rc-sel-tags">
+            <span class="rc-sel-tag p-i">Đấu thầu</span><span class="rc-sel-tag p-i">Quản lý DA</span><span class="rc-sel-tag p-i">Đội thợ</span>
+          </div>
+        </div>
+
+        <div class="rc-sel" onclick="loginAs('supplier')" style="border-color:rgba(201,168,76,.2)">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#C9A84C,#F59E0B)"></div>
+          <div class="rc-sel-ico">🏭</div>
+          <div class="rc-sel-name">Nhà cung cấp D2C</div>
+          <div class="rc-sel-desc">Bán thẳng từ nhà máy đến nhà thầu, không qua phân phối trung gian</div>
+          <div class="rc-sel-tags">
+            <span class="rc-sel-tag p-gold">Gian hàng D2C</span><span class="rc-sel-tag p-gold">Quản lý SP</span><span class="rc-sel-tag p-gold">Analytics</span>
+          </div>
+        </div>
+
+        <!-- ROW 2: Admin — chiếm full 2 cột -->
+        <div class="rc-sel" onclick="loginAs('admin')" style="grid-column:1/-1;border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.03);display:flex;align-items:center;gap:24px;padding:20px 26px">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#EF4444,#A855F7)"></div>
+          <div style="font-size:36px;flex-shrink:0">⚡</div>
+          <div style="flex:1">
+            <div class="rc-sel-name" style="color:var(--red);margin-bottom:4px">Administrator</div>
+            <div class="rc-sel-desc" style="margin-bottom:10px">Quản trị viên hệ thống — Duyệt nội dung, quản lý users, monitor giao dịch Escrow và bảo mật toàn nền tảng</div>
+            <div class="rc-sel-tags">
+              <span class="rc-sel-tag p-r">Quản lý Users</span>
+              <span class="rc-sel-tag p-r">Duyệt SP/Thợ</span>
+              <span class="rc-sel-tag p-r">Monitor Escrow</span>
+              <span class="rc-sel-tag p-r">Analytics</span>
+              <span class="rc-sel-tag p-r">Security & Log</span>
+            </div>
+          </div>
+          <div style="flex-shrink:0;padding:10px 18px;border-radius:11px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);font-size:12px;font-weight:700;color:var(--red);white-space:nowrap">Đăng nhập →</div>
+        </div>
+
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ BUYER PAGES ═══════════════ -->
+  <div class="pg" id="pg-buyer-overview">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">📊 Tổng quan</div><div style="font-size:11px;color:var(--text3)">Cập nhật realtime</div></div>
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="stat-card"><div class="stat-ico">💰</div><div class="stat-val" style="color:var(--c1)">68.5M</div><div class="stat-lbl">Chi tiêu tháng này</div><div class="stat-chg chg-up">▲ 12% vs tháng trước</div></div>
+        <div class="stat-card"><div class="stat-ico">🔒</div><div class="stat-val" style="color:var(--gold)">32.4M</div><div class="stat-lbl">Escrow đang giữ</div><div class="stat-chg" style="color:var(--text3)">3 giao dịch đang chờ</div></div>
+        <div class="stat-card"><div class="stat-ico">🏗️</div><div class="stat-val" style="color:var(--c2)">2</div><div class="stat-lbl">Công trình đang chạy</div><div class="stat-chg chg-up">▲ 1 mới tháng này</div></div>
+        <div class="stat-card"><div class="stat-ico">👷</div><div class="stat-val" style="color:var(--ind)">5</div><div class="stat-lbl">Thợ đã booking</div><div class="stat-chg" style="color:var(--text3)">2 đang làm việc hôm nay</div></div>
+      </div>
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">🏗️ Công trình đang theo dõi</div><button class="btn btn-ghost btn-sm" onclick="setPage('buyer-projects')">Xem tất cả</button></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="padding:12px;background:rgba(0,201,167,.05);border:1px solid rgba(0,201,167,.15);border-radius:10px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-weight:700;font-size:12px">Nhà phố 3 tầng Đống Đa</span><span class="pill p-b">Đang thi công</span></div>
+              <div class="prog-bar"><div class="prog-fill" style="width:45%;background:linear-gradient(90deg,#00C9A7,#0EA5E9)"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px"><span>45% hoàn thành</span><span>Còn 25 ngày</span></div>
+            </div>
+            <div style="padding:12px;background:rgba(14,165,233,.05);border:1px solid rgba(14,165,233,.15);border-radius:10px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-weight:700;font-size:12px">Phòng tắm master bedroom</span><span class="pill p-g">Hoàn thành 92%</span></div>
+              <div class="prog-bar"><div class="prog-fill" style="width:92%;background:linear-gradient(90deg,#22C55E,#00C9A7)"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px"><span>92% hoàn thành</span><span>Còn 3 ngày</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">👷 Thợ đang làm việc hôm nay</div><button class="btn btn-ghost btn-sm" onclick="setPage('buyer-workers')">Quản lý</button></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px;padding:9px;background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.15);border-radius:9px">
+              <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#00C9A7,#0EA5E9);display:flex;align-items:center;justify-content:center;font-size:17px">👷</div>
+              <div style="flex:1"><div style="font-weight:700;font-size:12px">Nguyễn Văn An</div><div style="font-size:10px;color:var(--green)">● Đang làm · Đống Đa · check-in 7:02</div></div>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Mở GPS tracking')">📍</button>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Chat với thợ')">💬</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:9px;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.15);border-radius:9px">
+              <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#6366F1);display:flex;align-items:center;justify-content:center;font-size:17px">⚡</div>
+              <div style="flex:1"><div style="font-weight:700;font-size:12px">Trần Văn Minh</div><div style="font-size:10px;color:var(--amb)">◐ Đến lúc 2:00 PM · Hoàn Kiếm</div></div>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Nhắn nhở thợ')">📱</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">🔒 Escrow đang hoạt động</div><button class="btn btn-ghost btn-sm" onclick="openModal('topupModal')">+ Nạp tiền</button></div>
+          <div style="background:linear-gradient(135deg,rgba(0,201,167,.08),rgba(14,165,233,.05));border:1px solid rgba(0,201,167,.15);border-radius:10px;padding:14px;margin-bottom:10px">
+            <div style="font-family:'Noto Sans Mono',monospace;font-size:24px;font-weight:800;color:var(--c1)">32,400,000đ</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px">Tổng đang bảo vệ bởi Escrow</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)"><span style="color:var(--text2)">Thợ Nguyễn Văn An · 3 ngày</span><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--amb)">1,350,000đ</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)"><span style="color:var(--text2)">Đơn vật liệu NXM-0891</span><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--amb)">14,322,000đ</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;padding:7px 0"><span style="color:var(--text2)">CT Hoàng Gia · Milestone 2</span><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--amb)">16,728,000đ</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">💳 Ví & Chi tiêu</div><button class="btn btn-ghost btn-sm" onclick="setPage('buyer-wallet')">Chi tiết</button></div>
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Chi tiêu 7 ngày gần nhất</div>
+            <div class="chart-bars">
+              <div class="cb" style="height:30%;background:rgba(0,201,167,.35);border-radius:4px 4px 0 0" onclick="toast('T2: 180M')"></div><div class="cb" style="height:45%;background:rgba(0,201,167,.35);border-radius:4px 4px 0 0" onclick="toast('T3: 210M')"></div><div class="cb" style="height:20%;background:rgba(0,201,167,.35);border-radius:4px 4px 0 0" onclick="toast('T4: 120M')"></div><div class="cb" style="height:60%;background:rgba(0,201,167,.35);border-radius:4px 4px 0 0" onclick="toast('T5: 280M')"></div><div class="cb" style="height:80%;background:rgba(0,201,167,.35);border-radius:4px 4px 0 0" onclick="toast('T6: 350M')"></div><div class="cb" style="height:55%;background:rgba(0,201,167,.35);border-radius:4px 4px 0 0" onclick="toast('T7: 260M')"></div><div class="cb" style="height:90%;background:linear-gradient(to top,#00C9A7,#0EA5E9);border-radius:4px 4px 0 0" onclick="toast('CN: 480M')"></div>
+            </div>
+            <div class="chart-labels"><div class="cl">T2</div><div class="cl">T3</div><div class="cl">T4</div><div class="cl">T5</div><div class="cl">T6</div><div class="cl">T7</div><div class="cl">CN</div></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-teal btn-sm" style="flex:1;justify-content:center" onclick="openModal('topupModal')">+ Nạp Escrow</button>
+            <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="setPage('buyer-wallet')">Lịch sử</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg" id="pg-buyer-projects">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">🏗️ Công trình của tôi</div><button class="btn btn-teal btn-sm" onclick="toast('Đăng công trình mới tìm nhà thầu')">+ Đăng công trình</button></div>
+      <div style="display:flex;gap:6px;margin-bottom:14px">
+        <button class="btn btn-ghost btn-sm on-filter" onclick="filterProj('all',this)" style="border-color:var(--c1);color:var(--c1)">Tất cả</button>
+        <button class="btn btn-ghost btn-sm" onclick="filterProj('bidding',this)">🔍 Đang tìm thầu</button>
+        <button class="btn btn-ghost btn-sm" onclick="filterProj('active',this)">🏗️ Đang thi công</button>
+        <button class="btn btn-ghost btn-sm" onclick="filterProj('done',this)">✅ Hoàn thành</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px" id="projectsList">
+        <div style="margin-bottom:10px;padding:12px;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+            <div style="font-weight:700;font-size:13px">Nhà phố 3 tầng Đống Đa</div>
+            <span class="pill p-b">Đang thi công</span>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" style="width:45%;background:linear-gradient(90deg,var(--c1),var(--c2))"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px;margin-bottom:8px">
+            <span>45% · Milestone 2/4 · CT Hoàng Gia</span><span>25 ngày còn lại · 280–350M</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-xs btn-t" onclick="toast('Xem tiến độ thi công chi tiết')">📊 Tiến độ</button>
+            <button class="btn btn-xs btn-g" onclick="toast('Chat với CT Hoàng Gia')">💬 Chat thầu</button>
+            <button class="btn btn-xs btn-g" onclick="toast('Xem hợp đồng số')">📄 Hợp đồng</button>
+          </div>
+        </div>
+        <div style="margin-bottom:10px;padding:12px;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+            <div style="font-weight:700;font-size:13px">Phòng tắm master + phòng ngủ</div>
+            <span class="pill p-g">92% hoàn thành</span>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" style="width:92%;background:linear-gradient(90deg,var(--green),var(--c1))"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px;margin-bottom:8px">
+            <span>92% · Milestone 3/3 · Lê Minh Tuấn</span><span>3 ngày còn lại · 38M</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-xs btn-green" onclick="toast('Xác nhận hoàn thành · Release Escrow 38M')">✅ Nghiệm thu</button>
+            <button class="btn btn-xs btn-g" onclick="toast('Chat với Lê Minh Tuấn')">💬 Chat</button>
+          </div>
+        </div>
+        <div style="padding:12px;background:rgba(255,255,255,.04);border:1px dashed var(--bdr);border-radius:10px;text-align:center;cursor:pointer" onclick="toast('Đăng công trình mới tìm nhà thầu')">
+          <div style="font-size:11px;color:var(--text3)">+ Đăng công trình mới</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg" id="pg-buyer-workers">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">👷 Thợ đã thuê</div><button class="btn btn-teal btn-sm" onclick="window.location.href='nexbuild-marketplace.html'">+ Tìm thợ mới</button></div>
+      <div class="grid-2" style="margin-bottom:14px">
+        <div style="padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(34,197,94,.2);border-radius:10px;margin-bottom:8px">
+          <div style="display:flex;gap:10px;align-items:center">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#00C9A7,#0EA5E9);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;position:relative">👷<div style="position:absolute;bottom:0;right:0;width:11px;height:11px;border-radius:50%;background:#22C55E;border:2px solid var(--bg2)"></div></div>
+            <div style="flex:1"><div style="font-weight:700;font-size:13px">Nguyễn Văn An</div><div style="font-size:10px;color:var(--text3)">Thợ hồ · Đống Đa · check-in 7:02AM</div><div style="font-size:10px;font-weight:700;color:#22C55E">● Đang làm hôm nay</div></div>
+            <div style="text-align:right"><div style="font-weight:800;font-size:14px;color:var(--c1)">450K<span style="font-size:10px;color:var(--text3)">/ngày</span></div><div style="font-size:10px;color:var(--amb)">⭐4.9 · 3 ngày</div></div>
+          </div>
+          <div style="background:rgba(0,201,167,.06);border:1px solid rgba(0,201,167,.15);border-radius:8px;padding:8px;margin-top:8px;margin-bottom:8px;font-size:10px;color:var(--text2)">🔒 Escrow: 1,350,000đ · Release khi bạn xác nhận</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-xs btn-t" onclick="toast('📍 GPS: Nguyễn Văn An đang ở Đống Đa')">GPS Track</button>
+            <button class="btn btn-xs btn-g" onclick="toast('Chat với Nguyễn Văn An')">💬 Chat</button>
+            <button class="btn btn-xs btn-g" onclick="toast('Xem hợp đồng')">📄</button>
+          </div>
+        </div>
+        <div style="padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(245,158,11,.2);border-radius:10px;margin-bottom:8px">
+          <div style="display:flex;gap:10px;align-items:center">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#6366F1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;position:relative">⚡<div style="position:absolute;bottom:0;right:0;width:11px;height:11px;border-radius:50%;background:#F59E0B;border:2px solid var(--bg2)"></div></div>
+            <div style="flex:1"><div style="font-weight:700;font-size:13px">Trần Văn Minh</div><div style="font-size:10px;color:var(--text3)">Thợ điện · Hoàn Kiếm</div><div style="font-size:10px;font-weight:700;color:#F59E0B">◐ Đến lúc 2:00 PM</div></div>
+            <div style="text-align:right"><div style="font-weight:800;font-size:14px;color:var(--c2)">550K<span style="font-size:10px;color:var(--text3)">/ngày</span></div><div style="font-size:10px;color:var(--amb)">⭐4.8 · 2 ngày</div></div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="btn btn-xs btn-g" onclick="toast('Chat với Trần Văn Minh')">💬 Chat</button>
+            <button class="btn btn-xs btn-g" onclick="toast('Dời lịch')">📅 Dời lịch</button>
+          </div>
+        </div>
+        <div style="padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(34,197,94,.15);border-radius:10px;margin-bottom:8px">
+          <div style="display:flex;gap:10px;align-items:center">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#A855F7);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🪵</div>
+            <div style="flex:1"><div style="font-weight:700;font-size:13px">Lê Minh Tuấn</div><div style="font-size:10px;color:var(--text3)">Thợ mộc · Cầu Giấy</div><div style="font-size:10px;font-weight:700;color:#22C55E">✓ Hoàn thành · 3 ngày</div></div>
+            <div style="text-align:right"><div style="font-weight:800;font-size:14px;color:var(--ind)">700K<span style="font-size:10px;color:var(--text3)">/ngày</span></div><div style="font-size:10px;color:var(--amb)">⭐5.0</div></div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="btn btn-xs btn-green" onclick="toast('✅ Release Escrow 2,100,000đ cho Lê Minh Tuấn')">✅ Release Escrow</button>
+            <button class="btn btn-xs btn-g" onclick="toast('Đánh giá Lê Minh Tuấn')">⭐ Đánh giá</button>
+          </div>
+        </div>
+        <div style="padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(34,197,94,.15);border-radius:10px">
+          <div style="display:flex;gap:10px;align-items:center">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#FB923C,#F59E0B);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🎨</div>
+            <div style="flex:1"><div style="font-weight:700;font-size:13px">Phạm Thị Hoa</div><div style="font-size:10px;color:var(--text3)">Thợ sơn · Thanh Xuân</div><div style="font-size:10px;font-weight:700;color:#22C55E">✓ Hoàn thành · 2 ngày</div></div>
+            <div style="text-align:right"><div style="font-weight:800;font-size:14px;color:var(--or)">350K<span style="font-size:10px;color:var(--text3)">/ngày</span></div><div style="font-size:10px;color:var(--amb)">⭐4.7</div></div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="btn btn-xs btn-green" onclick="toast('✅ Release Escrow 700,000đ cho Phạm Thị Hoa')">✅ Release Escrow</button>
+            <button class="btn btn-xs btn-g" onclick="toast('Đánh giá Phạm Thị Hoa')">⭐ Đánh giá</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg" id="pg-buyer-wallet">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">💳 Ví & Thanh toán</div></div>
+      <div class="grid-3" style="margin-bottom:16px">
+        <div style="background:linear-gradient(135deg,rgba(0,201,167,.12),rgba(14,165,233,.08));border:1px solid rgba(0,201,167,.25);border-radius:14px;padding:18px">
+          <div style="font-size:11px;color:var(--c1);font-weight:700;margin-bottom:6px">💰 Số dư Escrow</div>
+          <div style="font-family:'Noto Sans Mono',monospace;font-size:26px;font-weight:800;color:var(--c1)">32,400,000đ</div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn btn-teal btn-sm" style="flex:1;justify-content:center" onclick="openModal('topupModal')">+ Nạp tiền</button>
+            <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="toast('Rút tiền về tài khoản')">Rút tiền</button>
+          </div>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(245,158,11,.06));border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:18px">
+          <div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:6px">💳 Hạn mức B2B Credit</div>
+          <div style="font-family:'Noto Sans Mono',monospace;font-size:26px;font-weight:800;color:var(--gold)">50,000,000đ</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px">Đã dùng: 18.5M · Còn: 31.5M</div>
+          <div class="prog-bar" style="margin-top:8px"><div class="prog-fill" style="width:37%;background:linear-gradient(90deg,#C9A84C,#F59E0B)"></div></div>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(168,85,247,.06));border:1px solid rgba(99,102,241,.2);border-radius:14px;padding:18px">
+          <div style="font-size:11px;color:var(--ind);font-weight:700;margin-bottom:6px">📊 Chi tiêu tháng này</div>
+          <div style="font-family:'Noto Sans Mono',monospace;font-size:26px;font-weight:800;color:var(--ind)">68,500,000đ</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px">Vật liệu: 42M · Thợ: 5.1M · Nhà thầu: 21.4M</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="card-title-t">📋 Lịch sử giao dịch</div></div>
+        <table>
+          <thead><tr><th>Ngày</th><th>Mô tả</th><th>Loại</th><th>Số tiền</th><th>Trạng thái</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--text3)">Hôm nay</td><td>Đặt hàng Xi măng × 20 bao</td><td><span class="pill p-b">Đặt hàng</span></td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--red)">-2,560,000đ</td><td><span class="pill p-gold">Escrow</span></td></tr>
+            <tr><td style="color:var(--text3)">3 ngày trước</td><td>Release Escrow thợ Nguyễn Văn An</td><td><span class="pill p-b">Escrow</span></td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">+1,350,000đ</td><td><span class="pill p-g">Hoàn thành</span></td></tr>
+            <tr><td style="color:var(--text3)">5 ngày trước</td><td>Nạp ví VNPay</td><td><span class="pill p-b">Nạp tiền</span></td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">+10,000,000đ</td><td><span class="pill p-g">Hoàn thành</span></td></tr>
+            <tr><td style="color:var(--text3)">1 tuần trước</td><td>Sơn Dulux × 2 thùng</td><td><span class="pill p-b">Escrow release</span></td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">+1,560,000đ</td><td><span class="pill p-g">Hoàn thành</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg" id="pg-buyer-notif">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">🔔 Thông báo</div><button class="btn btn-ghost btn-sm" onclick="toast('Đã đọc tất cả')">Đọc tất cả</button></div>
+      <div>
+        <div style="display:flex;gap:10px;padding:10px;background:rgba(0,201,167,.05);border-radius:9px;margin-bottom:7px;cursor:pointer">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(0,201,167,.15);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🏗️</div>
+          <div><div style="font-size:12px;font-weight:700;color:var(--text)">CT Hoàng Gia cập nhật tiến độ</div><div style="font-size:10px;color:var(--text3)">Milestone 2 đạt 68% · 5 phút trước</div></div>
+        </div>
+        <div style="display:flex;gap:10px;padding:10px;background:rgba(34,197,94,.05);border-radius:9px;margin-bottom:7px;cursor:pointer">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">✅</div>
+          <div><div style="font-size:12px;font-weight:700;color:var(--text)">Escrow 1,350,000đ đã release</div><div style="font-size:10px;color:var(--text3)">Thợ Lê Minh Tuấn xác nhận xong · 30 phút trước</div></div>
+        </div>
+        <div style="display:flex;gap:10px;padding:10px;background:rgba(245,158,11,.05);border-radius:9px;cursor:pointer">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(245,158,11,.15);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📦</div>
+          <div><div style="font-size:12px;font-weight:700;color:var(--text)">Đơn hàng đang giao</div><div style="font-size:10px;color:var(--text3)">Xi măng Vicem × 20 bao · Dự kiến ngày mai 8–12h</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ WORKER PAGES ═══ -->
+  <div class="pg" id="pg-worker-overview">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">📊 Tổng quan</div><div class="pill p-g" style="font-size:10px">● Online — Nhận booking</div></div>
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="stat-card"><div class="stat-ico">💰</div><div class="stat-val" style="color:var(--green)">18.6M</div><div class="stat-lbl">Thu nhập tháng này</div><div class="stat-chg chg-up">▲ 22%</div></div>
+        <div class="stat-card"><div class="stat-ico">📅</div><div class="stat-val" style="color:var(--c2)">22</div><div class="stat-lbl">Ngày làm việc tháng</div><div class="stat-chg" style="color:var(--text3)">3 ngày còn trống</div></div>
+        <div class="stat-card"><div class="stat-ico">⭐</div><div class="stat-val" style="color:var(--amb)">4.9</div><div class="stat-lbl">Rating trung bình</div><div class="stat-chg chg-up">128 đánh giá</div></div>
+        <div class="stat-card"><div class="stat-ico">🔔</div><div class="stat-val" style="color:var(--red)">3</div><div class="stat-lbl">Booking request mới</div><div class="stat-chg" style="color:var(--text3)">Chờ phản hồi</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">🔔 Yêu cầu booking mới</div><button class="btn btn-ghost btn-sm" onclick="setPage('worker-bookings')">Xem tất cả</button></div>
+          <div style="padding:10px;background:rgba(0,201,167,.05);border:1px solid rgba(0,201,167,.15);border-radius:9px;margin-bottom:8px">
+            <div style="font-weight:700;font-size:13px;margin-bottom:2px">Nguyễn Thị Mai</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:2px">🔧 Tô trát tường 30m² · 📍 Từ Liêm · 📅 Thứ 4 · 3 ngày</div>
+            <div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:8px">🔒 Escrow: 1,350,000đ</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-green btn-xs" style="flex:1;justify-content:center" onclick="toast('✅ Nhận booking Nguyễn Thị Mai · Escrow kích hoạt')">✅ Nhận việc</button>
+              <button class="btn btn-red btn-xs" style="flex:1;justify-content:center" onclick="toast('Đã từ chối')">❌ Từ chối</button>
+            </div>
+          </div>
+          <div style="padding:10px;background:rgba(14,165,233,.05);border:1px solid rgba(14,165,233,.15);border-radius:9px">
+            <div style="font-weight:700;font-size:13px;margin-bottom:2px">Trần Văn Hùng</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:2px">🔧 Ốp gạch phòng tắm · 📍 Cầu Giấy · 📅 Thứ 5 · 2 ngày</div>
+            <div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:8px">🔒 Escrow: 1,000,000đ</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-green btn-xs" style="flex:1;justify-content:center" onclick="toast('✅ Nhận booking Trần Văn Hùng')">✅ Nhận việc</button>
+              <button class="btn btn-red btn-xs" style="flex:1;justify-content:center" onclick="toast('Đã từ chối')">❌ Từ chối</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">💰 Thu nhập tuần này</div><button class="btn btn-ghost btn-sm" onclick="openModal('withdrawModal')">💸 Rút tiền</button></div>
+          <div class="chart-bars" style="margin-bottom:4px">
+            <div class="cb" style="height:60%;background:rgba(14,165,233,.35);border-radius:4px 4px 0 0"></div><div class="cb" style="height:80%;background:rgba(14,165,233,.35);border-radius:4px 4px 0 0"></div><div class="cb" style="height:40%;background:rgba(14,165,233,.35);border-radius:4px 4px 0 0"></div><div class="cb" style="height:90%;background:rgba(14,165,233,.35);border-radius:4px 4px 0 0"></div><div class="cb" style="height:70%;background:rgba(14,165,233,.35);border-radius:4px 4px 0 0"></div><div class="cb" style="height:100%;background:rgba(14,165,233,.35);border-radius:4px 4px 0 0"></div><div class="cb" style="height:55%;background:linear-gradient(to top,#0EA5E9,#6366F1);border-radius:4px 4px 0 0"></div>
+          </div>
+            <div class="chart-labels"><div class="cl">T2</div><div class="cl">T3</div><div class="cl">T4</div><div class="cl">T5</div><div class="cl">T6</div><div class="cl">T7</div><div class="cl">CN</div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+            <div style="padding:9px;background:rgba(34,197,94,.07);border-radius:8px;text-align:center"><div style="font-family:'Noto Sans Mono',monospace;font-weight:800;color:var(--green)">4,500,000đ</div><div style="font-size:10px;color:var(--text3)">Hôm nay</div></div>
+            <div style="padding:9px;background:rgba(0,201,167,.07);border-radius:8px;text-align:center"><div style="font-family:'Noto Sans Mono',monospace;font-weight:800;color:var(--c1)">22,250,000đ</div><div style="font-size:10px;color:var(--text3)">Tuần này</div></div>
+          </div>
+          <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15);border-radius:8px;padding:9px;margin-top:8px;font-size:11px;color:var(--text2)">⏳ Escrow pending: <strong style="color:var(--amb)">2,450,000đ</strong> — sẽ về sau khi chủ xác nhận</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg" id="pg-worker-jobs">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">🏗️ Công việc đang làm</div></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+            <div><div style="font-weight:800;font-size:14px">Tô trát nhà phố 3 tầng</div><div style="font-size:11px;color:var(--text3)">12 Trần Duy Hưng, Đống Đa · Nguyễn Văn A · CHN-1234</div></div>
+            <span class="pill p-g">Đang làm hôm nay</span>
+          </div>
+          <div class="gps-map">
+            <div class="gps-pin" style="top:40%;left:45%">📍</div>
+            <div class="gps-overlay">GPS Active · Cập nhật 2 phút trước · 12 Trần Duy Hưng, Đống Đa · Check-in: 7:02 AM</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn btn-teal btn-sm" style="flex:1;justify-content:center" onclick="toast('✅ Check-out thành công · 8.5 giờ làm việc ghi nhận')">✅ Check-out</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Upload ảnh tiến độ')">📸 Ảnh tiến độ</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Báo cáo ngày hôm nay')">📋 Báo cáo</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Chat với chủ nhà')">💬 Chat</button>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <div><div style="font-weight:800;font-size:14px">Ốp gạch phòng tắm master</div><div style="font-size:11px;color:var(--text3)">8 Hoàn Kiếm · Lê Thị Mai · Ngày mai</div></div>
+            <span class="pill p-b">Ngày mai · 7:00 AM</span>
+          </div>
+          <div style="background:rgba(14,165,233,.06);border:1px solid rgba(14,165,233,.15);border-radius:9px;padding:10px;font-size:11px;color:var(--text2)">
+            <div>Công việc: Ốp gạch 20m² phòng tắm · 2 ngày · 500K/ngày = 1,000,000đ</div>
+            <div style="margin-top:4px;color:var(--c1)">🔒 Escrow 1,000,000đ đã kích hoạt · Tiền được bảo vệ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg" id="pg-worker-earnings">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">💰 Thu nhập & Ví</div><button class="btn btn-teal btn-sm" onclick="openModal('withdrawModal')">💸 Rút tiền</button></div>
+      <div class="grid-3" style="margin-bottom:16px">
+        <div style="background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(0,201,167,.08));border:1px solid rgba(34,197,94,.25);border-radius:14px;padding:16px">
+          <div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:5px">✅ Số dư khả dụng</div>
+          <div style="font-family:'Noto Sans Mono',monospace;font-size:24px;font-weight:800;color:var(--green)">24,650,000đ</div>
+          <button class="btn btn-green btn-sm" style="margin-top:10px;width:100%;justify-content:center" onclick="openModal('withdrawModal')">💸 Rút ngay</button>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(251,146,60,.06));border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:16px">
+          <div style="font-size:11px;color:var(--amb);font-weight:700;margin-bottom:5px">⏳ Escrow đang chờ</div>
+          <div style="font-family:'Noto Sans Mono',monospace;font-size:24px;font-weight:800;color:var(--amb)">2,450,000đ</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:6px">Về sau khi chủ nhà xác nhận</div>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(0,201,167,.1),rgba(14,165,233,.06));border:1px solid rgba(0,201,167,.2);border-radius:14px;padding:16px">
+          <div style="font-size:11px;color:var(--c1);font-weight:700;margin-bottom:5px">📊 Tổng tháng này</div>
+          <div style="font-family:'Noto Sans Mono',monospace;font-size:24px;font-weight:800;color:var(--c1)">18,600,000đ</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:6px">Cao nhất từ trước đến nay</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="card-title-t">📋 Lịch sử thu nhập</div></div>
+        <table>
+          <thead><tr><th>Ngày</th><th>Công việc</th><th>Chủ nhà</th><th>Ngày làm</th><th>Thu nhập</th><th>Trạng thái</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--text3)">Hôm nay</td><td>Tô trát nhà phố tầng 2</td><td>Nguyễn Văn A</td><td style="font-family:'Noto Sans Mono',monospace">1/3</td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">500,000đ</td><td><span class="pill p-gold">Đang làm</span></td></tr>
+            <tr><td style="color:var(--text3)">Hôm qua</td><td>Tô trát nhà phố tầng 1</td><td>Nguyễn Văn A</td><td style="font-family:'Noto Sans Mono',monospace">1 ngày</td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">450,000đ</td><td><span class="pill p-g">Đã nhận</span></td></tr>
+            <tr><td style="color:var(--text3)">3 ngày trước</td><td>Chống thấm mái</td><td>Trần Văn B</td><td style="font-family:'Noto Sans Mono',monospace">2 ngày</td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">900,000đ</td><td><span class="pill p-g">Đã nhận</span></td></tr>
+            <tr><td style="color:var(--text3)">1 tuần trước</td><td>Ốp lát phòng bếp</td><td>Lê Thị C</td><td style="font-family:'Noto Sans Mono',monospace">3 ngày</td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">1,350,000đ</td><td><span class="pill p-g">Đã nhận</span></td></tr>
+            <tr><td style="color:var(--text3)">2 tuần trước</td><td>Tô trát biệt thự</td><td>CT Hoàng Gia</td><td style="font-family:'Noto Sans Mono',monospace">5 ngày</td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">2,250,000đ</td><td><span class="pill p-g">Đã nhận</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══ WORKER EXTRA PAGES ═══ -->
+
+  <!-- WORKER BOOKINGS -->
+  <div class="pg" id="pg-worker-bookings">
+    <div class="pg-inner">
+      <div class="sec-hdr">
+        <div class="sec-title">🔔 Booking requests</div>
+        <div style="display:flex;gap:7px">
+          <span class="pill p-r" style="font-size:11px;padding:4px 10px">3 mới</span>
+          <button class="btn btn-ghost btn-sm" onclick="toast('Tắt nhận booking tạm thời')">⏸ Tạm nghỉ</button>
+        </div>
+      </div>
+
+      <!-- BOOKING MỚI -->
+      <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">🔴 Chờ xác nhận (3)</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+
+        <div class="card" style="border-color:rgba(0,201,167,.25);background:rgba(0,201,167,.03)">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#6366F1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏠</div>
+            <div style="flex:1">
+              <div style="font-weight:800;font-size:14px;margin-bottom:2px">Nguyễn Thị Mai</div>
+              <div style="font-size:12px;color:var(--text2);margin-bottom:2px">🔧 Tô trát tường 2 phòng ngủ</div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:8px">📍 Từ Liêm, HN · 📅 Thứ 4, 18/06 · ⏱ 3 ngày</div>
+              <div style="background:rgba(0,201,167,.07);border:1px solid rgba(0,201,167,.18);border-radius:9px;padding:9px 12px;margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;font-size:12px">
+                  <span>💰 450,000đ/ngày × 3 ngày</span>
+                  <span style="font-weight:800;color:var(--green)">Escrow: 1,350,000đ</span>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-teal btn-sm" style="flex:1;justify-content:center" onclick="this.closest('.card').style.borderColor='rgba(34,197,94,.3)';this.textContent='✅ Đã nhận';this.disabled=true;toast('✅ Đã nhận booking · Escrow kích hoạt · Nguyễn Thị Mai đã được thông báo')">✅ Nhận việc</button>
+                <button class="btn btn-ghost btn-sm" onclick="toast('💬 Chat với Nguyễn Thị Mai')">💬 Chat</button>
+                <button class="btn btn-sm" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--red)" onclick="this.closest('.card').style.opacity='.5';toast('❌ Đã từ chối booking')">❌</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(0,201,167,.25);background:rgba(0,201,167,.03)">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#A855F7);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏢</div>
+            <div style="flex:1">
+              <div style="font-weight:800;font-size:14px;margin-bottom:2px">Trần Văn Hùng</div>
+              <div style="font-size:12px;color:var(--text2);margin-bottom:2px">🔧 Ốp gạch phòng tắm 8m²</div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:8px">📍 Cầu Giấy, HN · 📅 Thứ 5, 19/06 · ⏱ 2 ngày</div>
+              <div style="background:rgba(0,201,167,.07);border:1px solid rgba(0,201,167,.18);border-radius:9px;padding:9px 12px;margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;font-size:12px">
+                  <span>💰 500,000đ/ngày × 2 ngày</span>
+                  <span style="font-weight:800;color:var(--green)">Escrow: 1,000,000đ</span>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-teal btn-sm" style="flex:1;justify-content:center" onclick="this.closest('.card').style.borderColor='rgba(34,197,94,.3)';this.textContent='✅ Đã nhận';this.disabled=true;toast('✅ Đã nhận booking · Escrow kích hoạt')">✅ Nhận việc</button>
+                <button class="btn btn-ghost btn-sm" onclick="toast('💬 Chat với Trần Văn Hùng')">💬 Chat</button>
+                <button class="btn btn-sm" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--red)" onclick="this.closest('.card').style.opacity='.5';toast('❌ Đã từ chối')">❌</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(0,201,167,.25);background:rgba(0,201,167,.03)">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#FB923C);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏡</div>
+            <div style="flex:1">
+              <div style="font-weight:800;font-size:14px;margin-bottom:2px">CT Hoàng Gia</div>
+              <div style="font-size:12px;color:var(--text2);margin-bottom:2px">🔧 Chống thấm sân thượng 40m²</div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:8px">📍 Hoàng Mai, HN · 📅 Thứ 6, 20/06 · ⏱ 1 ngày</div>
+              <div style="background:rgba(0,201,167,.07);border:1px solid rgba(0,201,167,.18);border-radius:9px;padding:9px 12px;margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;font-size:12px">
+                  <span>💰 600,000đ/ngày × 1 ngày</span>
+                  <span style="font-weight:800;color:var(--green)">Escrow: 600,000đ</span>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-teal btn-sm" style="flex:1;justify-content:center" onclick="this.closest('.card').style.borderColor='rgba(34,197,94,.3)';this.textContent='✅ Đã nhận';this.disabled=true;toast('✅ Đã nhận booking · Escrow kích hoạt')">✅ Nhận việc</button>
+                <button class="btn btn-ghost btn-sm" onclick="toast('💬 Chat với CT Hoàng Gia')">💬 Chat</button>
+                <button class="btn btn-sm" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--red)" onclick="this.closest('.card').style.opacity='.5';toast('❌ Đã từ chối')">❌</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOOKING ĐÃ NHẬN -->
+      <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">✅ Đang thực hiện (2)</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:44px;height:44px;border-radius:50%;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;font-size:20px">🏠</div>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:13px">Lê Thị Hoà · Tô trát biệt thự</div>
+              <div style="font-size:11px;color:var(--text3)">📍 Hà Đông · 🟢 Đang làm ngày 2/3 · Escrow: 1,350,000đ</div>
+            </div>
+            <div style="display:flex;gap:7px">
+              <button class="btn btn-ghost btn-sm" onclick="toast('Báo cáo tiến độ hôm nay')">📊 Tiến độ</button>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Chat với Lê Thị Hoà')">💬</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:44px;height:44px;border-radius:50%;background:rgba(14,165,233,.15);display:flex;align-items:center;justify-content:center;font-size:20px">🏢</div>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:13px">Phạm Văn Dũng · Điện tầng 3</div>
+              <div style="font-size:11px;color:var(--text3)">📍 Cầu Giấy · 📅 Ngày mai · Escrow: 900,000đ</div>
+            </div>
+            <div style="display:flex;gap:7px">
+              <button class="btn btn-ghost btn-sm" onclick="toast('Xem chi tiết booking')">Chi tiết</button>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Chat với Phạm Văn Dũng')">💬</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKER PORTFOLIO -->
+  <div class="pg" id="pg-worker-portfolio">
+    <div class="pg-inner">
+      <div class="sec-hdr">
+        <div class="sec-title">🗂️ Portfolio công trình</div>
+        <button class="btn btn-teal btn-sm" onclick="toast('Upload ảnh công trình mới')">+ Upload ảnh</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+
+        <div class="card" style="padding:0;overflow:hidden;cursor:pointer" onclick="toast('Xem chi tiết: Nhà phố 3 tầng Đống Đa')">
+          <div style="height:110px;background:linear-gradient(135deg,#0a1628,#1a2840);display:flex;align-items:center;justify-content:center;font-size:42px;position:relative">
+            🏠
+            <div style="position:absolute;top:8px;right:8px"><span class="pill p-g">4.9★</span></div>
+          </div>
+          <div style="padding:12px">
+            <div style="font-weight:700;font-size:13px;margin-bottom:3px">Nhà phố 3 tầng Đống Đa</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Tô trát + ốp lát · 2024 · 12 ngày</div>
+            <div style="display:flex;gap:5px">
+              <span class="pill p-b">Tô trát</span>
+              <span class="pill p-t">Ốp lát</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden;cursor:pointer" onclick="toast('Xem chi tiết: Biệt thự Hà Đông')">
+          <div style="height:110px;background:linear-gradient(135deg,#0d1a10,#1a3020);display:flex;align-items:center;justify-content:center;font-size:42px;position:relative">
+            🏡
+            <div style="position:absolute;top:8px;right:8px"><span class="pill p-g">5.0★</span></div>
+          </div>
+          <div style="padding:12px">
+            <div style="font-weight:700;font-size:13px;margin-bottom:3px">Biệt thự 500m² Hà Đông</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Hoàn thiện toàn bộ · 2024 · 45 ngày</div>
+            <div style="display:flex;gap:5px">
+              <span class="pill p-t">Tô trát</span>
+              <span class="pill p-i">Chống thấm</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden;cursor:pointer" onclick="toast('Xem chi tiết: Văn phòng Cầu Giấy')">
+          <div style="height:110px;background:linear-gradient(135deg,#1a0d28,#2d1248);display:flex;align-items:center;justify-content:center;font-size:42px;position:relative">
+            🏢
+            <div style="position:absolute;top:8px;right:8px"><span class="pill p-g">5.0★</span></div>
+          </div>
+          <div style="padding:12px">
+            <div style="font-weight:700;font-size:13px;margin-bottom:3px">Văn phòng Cầu Giấy</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Tô trát + sơn · 2023 · 8 ngày</div>
+            <div style="display:flex;gap:5px">
+              <span class="pill p-t">Tô trát</span>
+              <span class="pill p-v">Sơn</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden;cursor:pointer" onclick="toast('Xem chi tiết: Chung cư Hoàng Mai')">
+          <div style="height:110px;background:linear-gradient(135deg,#1a1208,#281a08);display:flex;align-items:center;justify-content:center;font-size:42px;position:relative">
+            🏗️
+            <div style="position:absolute;top:8px;right:8px"><span class="pill p-g">4.8★</span></div>
+          </div>
+          <div style="padding:12px">
+            <div style="font-weight:700;font-size:13px;margin-bottom:3px">Chung cư Hoàng Mai ×40 căn</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Ốp gạch WC · 2023 · 60 ngày</div>
+            <div style="display:flex;gap:5px">
+              <span class="pill p-t">Ốp lát</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden;cursor:pointer" onclick="toast('Xem chi tiết: Villa Hoà Lạc')">
+          <div style="height:110px;background:linear-gradient(135deg,#140808,#281010);display:flex;align-items:center;justify-content:center;font-size:42px;position:relative">
+            🏖️
+            <div style="position:absolute;top:8px;right:8px"><span class="pill p-g">4.9★</span></div>
+          </div>
+          <div style="padding:12px">
+            <div style="font-weight:700;font-size:13px;margin-bottom:3px">Villa Hoà Lạc</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Hoàn thiện nội thất · 2022 · 30 ngày</div>
+            <div style="display:flex;gap:5px">
+              <span class="pill p-t">Tô trát</span>
+              <span class="pill p-i">Ốp lát</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="display:flex;align-items:center;justify-content:center;min-height:170px;cursor:pointer;border-style:dashed" onclick="toast('Upload ảnh công trình mới vào portfolio')">
+          <div style="text-align:center;color:var(--text3)">
+            <div style="font-size:32px;margin-bottom:8px">📸</div>
+            <div style="font-size:12px;font-weight:700">+ Thêm công trình</div>
+            <div style="font-size:10px;margin-top:3px">Upload ảnh · Max 10MB</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="grid-3" style="margin-top:18px">
+        <div class="kpi a" style="text-align:center">
+          <div class="kpi-l">🏗️ Tổng công trình</div>
+          <div class="kpi-v" style="color:var(--c2)">234</div>
+          <div class="kpi-n">Đã hoàn thành</div>
+        </div>
+        <div class="kpi a" style="text-align:center">
+          <div class="kpi-l">⭐ Rating trung bình</div>
+          <div class="kpi-v" style="color:var(--amb)">4.9</div>
+          <div class="kpi-n">128 đánh giá</div>
+        </div>
+        <div class="kpi a" style="text-align:center">
+          <div class="kpi-l">✅ Tỷ lệ hoàn thành</div>
+          <div class="kpi-v" style="color:var(--green)">98%</div>
+          <div class="kpi-n">Đúng hạn</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORKER REVIEWS -->
+  <div class="pg" id="pg-worker-reviews">
+    <div class="pg-inner">
+      <div class="sec-hdr">
+        <div class="sec-title">⭐ Đánh giá nhận được</div>
+        <div style="font-family:'Noto Sans Mono',monospace;font-size:22px;font-weight:800;color:var(--amb)">4.9<span style="font-size:13px;font-weight:400;color:var(--text3)"> / 5.0 (128)</span></div>
+      </div>
+
+      <!-- Rating breakdown -->
+      <div class="grid-2" style="margin-bottom:18px">
+        <div class="card">
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:12px;color:var(--amb);width:20px">5★</span><div style="flex:1;height:7px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:89%;height:100%;background:var(--amb);border-radius:3px"></div></div><span style="font-size:11px;color:var(--text3);width:30px">89%</span></div></div>
+            <div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:12px;color:var(--amb);width:20px">4★</span><div style="flex:1;height:7px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:8%;height:100%;background:var(--amb);border-radius:3px;opacity:.6"></div></div><span style="font-size:11px;color:var(--text3);width:30px">8%</span></div></div>
+            <div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:12px;color:var(--amb);width:20px">3★</span><div style="flex:1;height:7px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:2%;height:100%;background:var(--amb);border-radius:3px;opacity:.4"></div></div><span style="font-size:11px;color:var(--text3);width:30px">2%</span></div></div>
+            <div><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:12px;color:var(--amb);width:20px">2★</span><div style="flex:1;height:7px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:1%;height:100%;background:var(--amb);border-radius:3px;opacity:.3"></div></div><span style="font-size:11px;color:var(--text3);width:30px">1%</span></div></div>
+            <div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:var(--amb);width:20px">1★</span><div style="flex:1;height:7px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:0%;height:100%;background:var(--red);border-radius:3px"></div></div><span style="font-size:11px;color:var(--text3);width:30px">0%</span></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:10px">Nhận xét phổ biến</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <span style="padding:4px 10px;border-radius:8px;background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.2);color:var(--c1);font-size:11px;font-weight:600">Đúng hạn ✓ (118)</span>
+            <span style="padding:4px 10px;border-radius:8px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:var(--green);font-size:11px;font-weight:600">Làm kỹ ✓ (112)</span>
+            <span style="padding:4px 10px;border-radius:8px;background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.2);color:var(--c2);font-size:11px;font-weight:600">Sạch sẽ ✓ (98)</span>
+            <span style="padding:4px 10px;border-radius:8px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--amb);font-size:11px;font-weight:600">Giao tiếp tốt ✓ (87)</span>
+            <span style="padding:4px 10px;border-radius:8px;background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);color:var(--vio);font-size:11px;font-weight:600">Book lại ✓ (76)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Review cards -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#6366F1);display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>
+            <div style="flex:1"><div style="font-weight:700;font-size:12px">Nguyễn Văn Minh</div><div style="font-size:10px;color:var(--text3)">Nhà phố 3 tầng Đống Đa · 1 tuần trước</div></div>
+            <div style="color:var(--amb);font-weight:700;font-size:13px">⭐⭐⭐⭐⭐</div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.65">Thợ làm rất kỹ, cẩn thận, đúng tiến độ. Giao tiếp tốt, báo cáo hàng ngày qua app. Sẽ book lại lần sau!</div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#00C9A7,#0EA5E9);display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>
+            <div style="flex:1"><div style="font-weight:700;font-size:12px">Trần Thị Lan</div><div style="font-size:10px;color:var(--text3)">Ốp gạch phòng tắm · 2 tuần trước</div></div>
+            <div style="color:var(--amb);font-weight:700;font-size:13px">⭐⭐⭐⭐⭐</div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.65">Tay nghề xuất sắc, đường chỉ thẳng đẹp, sạch sẽ sau khi xong. Recommend 100% cho mọi người.</div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#A855F7);display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>
+            <div style="flex:1"><div style="font-weight:700;font-size:12px">Lê Văn Đức</div><div style="font-size:10px;color:var(--text3)">Chống thấm sân thượng · 3 tuần trước</div></div>
+            <div style="color:var(--amb);font-weight:700;font-size:13px">⭐⭐⭐⭐</div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.65">Làm tốt, chỉ hơi chậm tiến độ 1 ngày nhưng có báo trước. Chất lượng ổn, giá hợp lý.</div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#FB923C);display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>
+            <div style="flex:1"><div style="font-weight:700;font-size:12px">Phạm Thị Hoa</div><div style="font-size:10px;color:var(--text3)">Biệt thự Hà Đông · 1 tháng trước</div></div>
+            <div style="color:var(--amb);font-weight:700;font-size:13px">⭐⭐⭐⭐⭐</div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.65">Hoàn thiện đẹp, đúng theo bản vẽ. Thợ thân thiện, làm việc chuyên nghiệp. Escrow bảo vệ rất tốt.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- WORKER ACADEMY -->
+  <div class="pg" id="pg-worker-academy">
+    <div class="pg-inner">
+      <div class="sec-hdr">
+        <div class="sec-title">🎓 NexAcademy</div>
+        <div style="display:flex;gap:7px;align-items:center">
+          <span class="pill p-gold" style="font-size:11px">850 NXT Token</span>
+          <button class="btn btn-ghost btn-sm" onclick="window.open('nexbuild-hub.html','_blank')">Mở đầy đủ ↗</button>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-bottom:18px">
+        <div class="kpi a" style="text-align:center"><div class="kpi-l">📚 Đang học</div><div class="kpi-v" style="color:var(--c2)">3</div><div class="kpi-n">khóa học</div></div>
+        <div class="kpi a" style="text-align:center"><div class="kpi-l">🏆 Chứng chỉ</div><div class="kpi-v" style="color:var(--green)">2</div><div class="kpi-n">đã đạt</div></div>
+        <div class="kpi a" style="text-align:center"><div class="kpi-l">⬡ NXT Token</div><div class="kpi-v" style="color:var(--gold)">850</div><div class="kpi-n">từ bài học</div></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+            <div><div style="font-weight:800;font-size:14px;margin-bottom:3px">Kỹ thuật chống thấm chuyên sâu</div><div style="font-size:11px;color:var(--text3)">12 bài học · 6h học · Giảng viên: Master Nguyễn</div></div>
+            <span class="pill p-gold">Chứng chỉ Pro</span>
+          </div>
+          <div style="height:7px;background:rgba(255,255,255,.06);border-radius:3px;margin-bottom:5px"><div style="width:75%;height:100%;background:linear-gradient(90deg,var(--gold),var(--amb));border-radius:3px"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:10px"><span>75% · 9/12 bài học</span><span>Hoàn thành để nhận +200 NXT</span></div>
+          <button class="btn btn-gold btn-sm" onclick="toast('▶ Tiếp tục bài 10: Chống thấm vùng giáp mái')">▶ Tiếp tục học — Bài 10</button>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+            <div><div style="font-weight:800;font-size:14px;margin-bottom:3px">Ốp lát tile cao cấp & vật liệu 2025</div><div style="font-size:11px;color:var(--text3)">8 bài học · 4h học · Cập nhật tháng 3/2025</div></div>
+            <span class="pill p-b">Tile Expert</span>
+          </div>
+          <div style="height:7px;background:rgba(255,255,255,.06);border-radius:3px;margin-bottom:5px"><div style="width:37%;height:100%;background:linear-gradient(90deg,var(--c2),var(--ind));border-radius:3px"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:10px"><span>37% · 3/8 bài học</span><span>+150 NXT khi hoàn thành</span></div>
+          <button class="btn btn-b btn-sm" onclick="toast('▶ Tiếp tục bài 4: Kỹ thuật cắt tile góc 45°')">▶ Tiếp tục học — Bài 4</button>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+            <div><div style="font-weight:800;font-size:14px;margin-bottom:3px">Giao tiếp chuyên nghiệp với khách hàng</div><div style="font-size:11px;color:var(--text3)">6 bài học · 3h học · Kỹ năng mềm</div></div>
+            <span class="pill p-t">Soft Skills</span>
+          </div>
+          <div style="height:7px;background:rgba(255,255,255,.06);border-radius:3px;margin-bottom:5px"><div style="width:17%;height:100%;background:linear-gradient(90deg,var(--c1),var(--c2));border-radius:3px"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:10px"><span>17% · 1/6 bài học</span><span>+100 NXT khi hoàn thành</span></div>
+          <button class="btn btn-teal btn-sm" onclick="toast('▶ Tiếp tục bài 2: Lắng nghe và hiểu nhu cầu KH')">▶ Tiếp tục học — Bài 2</button>
+        </div>
+
+      </div>
+
+      <!-- Chứng chỉ đã đạt -->
+      <div style="margin-top:20px">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">🏆 Chứng chỉ đã đạt</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="card" style="background:rgba(201,168,76,.06);border-color:rgba(201,168,76,.25);display:flex;align-items:center;gap:12px">
+            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,rgba(201,168,76,.25),rgba(245,158,11,.15));display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🏅</div>
+            <div><div style="font-weight:700;font-size:12px;color:var(--gold)">Thợ Hồ Certified</div><div style="font-size:10px;color:var(--text3)">NexAcademy · 15/01/2025</div><div style="font-size:10px;color:var(--c1);margin-top:2px">+3 booking/tuần từ khi có badge</div></div>
+          </div>
+          <div class="card" style="background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.25);display:flex;align-items:center;gap:12px">
+            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,rgba(34,197,94,.25),rgba(0,201,167,.15));display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">✅</div>
+            <div><div style="font-weight:700;font-size:12px;color:var(--green)">Escrow Ready</div><div style="font-size:10px;color:var(--text3)">NexBuild · 10/01/2025</div><div style="font-size:10px;color:var(--c1);margin-top:2px">Tin tưởng · Ưu tiên hiển thị</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CONTRACTOR PAGES ═══ -->
+  <div class="pg" id="pg-contractor-overview">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">📊 Tổng quan nhà thầu</div></div>
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="stat-card"><div class="stat-ico">🏗️</div><div class="stat-val" style="color:var(--ind)">3</div><div class="stat-lbl">DA đang thi công</div><div class="stat-chg chg-up">GMV: 6.2B</div></div>
+        <div class="stat-card"><div class="stat-ico">📋</div><div class="stat-val" style="color:var(--c2)">5</div><div class="stat-lbl">Hồ sơ đang thầu</div><div class="stat-chg" style="color:var(--text3)">Tỷ lệ thắng: 42%</div></div>
+        <div class="stat-card"><div class="stat-ico">👷</div><div class="stat-val" style="color:var(--c1)">15</div><div class="stat-lbl">Thợ trong đội</div><div class="stat-chg" style="color:var(--text3)">12 đang làm việc</div></div>
+        <div class="stat-card"><div class="stat-ico">💰</div><div class="stat-val" style="color:var(--green)">2.8B</div><div class="stat-lbl">Doanh thu tháng</div><div class="stat-chg chg-up">▲ 18%</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">🏗️ Dự án đang chạy</div><button class="btn btn-ghost btn-sm" onclick="setPage('contractor-projects')">Xem tất cả</button></div>
+          <div style="margin-bottom:8px;padding:10px;background:rgba(255,255,255,.04);border-radius:9px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px"><div style="font-weight:700;font-size:12px">Biệt thự 500m² Hà Đông</div><span class="pill p-gold">120 ngày · M2/6</span></div>
+            <div class="prog-bar" style="margin-bottom:4px"><div class="prog-fill" style="width:45%;background:linear-gradient(90deg,var(--c2),var(--ind))"></div></div>
+            <div style="font-size:10px;color:var(--text3)">45% · Escrow: 320M</div>
+          </div>
+          <div style="margin-bottom:8px;padding:10px;background:rgba(255,255,255,.04);border-radius:9px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px"><div style="font-weight:700;font-size:12px">Fit-out VP 400m² Cầu Giấy</div><span class="pill p-r">12 ngày · M3/4</span></div>
+            <div class="prog-bar" style="margin-bottom:4px"><div class="prog-fill" style="width:78%;background:linear-gradient(90deg,var(--amb),var(--or))"></div></div>
+            <div style="font-size:10px;color:var(--text3)">78% · Escrow: 480M</div>
+          </div>
+          <div style="padding:10px;background:rgba(255,255,255,.04);border-radius:9px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px"><div style="font-weight:700;font-size:12px">Nhà phố 3T Đống Đa</div><span class="pill p-g">5 ngày · M4/4</span></div>
+            <div class="prog-bar" style="margin-bottom:4px"><div class="prog-fill" style="width:92%;background:linear-gradient(90deg,var(--green),var(--c1))"></div></div>
+            <div style="font-size:10px;color:var(--text3)">92% · Escrow: 280M · Gần nghiệm thu</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">💰 Escrow & Thanh toán</div><button class="btn btn-ghost btn-sm" onclick="setPage('contractor-finance')">Chi tiết</button></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="padding:10px;background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(168,85,247,.05));border:1px solid rgba(99,102,241,.18);border-radius:9px">
+              <div style="font-size:11px;color:var(--ind);font-weight:700">💼 Milestone sắp đến hạn</div>
+              <div style="font-family:'Noto Sans Mono',monospace;font-size:18px;font-weight:800;color:var(--ind);margin:4px 0">96,000,000đ</div>
+              <div style="font-size:10px;color:var(--text2)">VP Cầu Giấy · Milestone 3 · 5 ngày nữa</div>
+              <button class="btn btn-ind btn-sm" style="margin-top:8px;width:100%;justify-content:center" onclick="toast('Yêu cầu nghiệm thu Milestone 3')">📋 Yêu cầu nghiệm thu</button>
+            </div>
+            <div style="padding:10px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.15);border-radius:9px">
+              <div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:4px">✅ Vừa nhận</div>
+              <div style="font-size:12px">Biệt thự Hà Đông · Milestone 1 đã release → <strong style="color:var(--green)">+64M</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg" id="pg-contractor-bids">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">📋 Quản lý đấu thầu</div><button class="btn btn-blue btn-sm" onclick="window.location.href='nexbuild-marketplace.html'">🔍 Tìm công trình mới</button></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <tr>
+          <td style="font-weight:600">Shophouse 4T Hai Bà Trưng · F&amp;B</td><td style="font-family:'Noto Sans Mono',monospace;color:var(--ind)">950M</td>
+          <td style="font-size:11px;color:var(--text3)">Hôm qua · 22 lượt xem</td><td><span class="pill p-gold">Đang xét duyệt</span></td>
+          <td><div style="display:flex;gap:5px"><button class="btn btn-xs btn-g" onclick="toast('Xem hồ sơ đã nộp')">Xem</button></div></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Biệt thự nghỉ dưỡng 800m² Ba Vì</td><td style="font-family:'Noto Sans Mono',monospace;color:var(--ind)">3.8B</td>
+          <td style="font-size:11px;color:var(--text3)">3 ngày trước · 8 lượt xem</td><td><span class="pill p-b">Shortlist (3/12)</span></td>
+          <td><div style="display:flex;gap:5px"><button class="btn btn-xs btn-g" onclick="toast('Xem hồ sơ')">Xem</button></div></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Chung cư mini 20 phòng Hà Đông</td><td style="font-family:'Noto Sans Mono',monospace;color:var(--ind)">8.2B</td>
+          <td style="font-size:11px;color:var(--text3)">1 tuần trước · 34 lượt</td><td><span class="pill p-r">Thua thầu</span></td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Nhà máy sản xuất 2000m² Bắc Ninh</td><td style="font-family:'Noto Sans Mono',monospace;color:var(--ind)">24B</td>
+          <td style="font-size:11px;color:var(--text3)">2 ngày trước · 5 lượt</td><td><span class="pill p-gold">Chờ phản hồi</span></td>
+          <td><div style="display:flex;gap:5px"><button class="btn btn-xs btn-g" onclick="toast('Xem hồ sơ')">Xem</button></div></td>
+        </tr>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg" id="pg-contractor-team">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">👷 Quản lý đội thợ</div><button class="btn btn-teal btn-sm" onclick="toast('Tuyển thợ mới qua NexTalent')">+ Tuyển thợ</button></div>
+      <div class="grid-2">
+        <tr>
+          <td><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#00C9A7,#0EA5E9);display:flex;align-items:center;justify-content:center;font-size:14px">👷</div><span style="font-weight:600">Nguyễn Văn An</span></div></td>
+          <td>Thợ hồ senior</td><td>Biệt thự Hà Đông</td>
+          <td style="font-family:'Noto Sans Mono',monospace;color:var(--green)">9.0M</td><td style="color:var(--amb)">⭐4.9</td>
+          <td><span class="pill p-g">Đang làm</span></td>
+          <td><button class="btn btn-xs btn-g" onclick="toast('Phân công việc Nguyễn Văn An')">Phân công</button></td>
+        </tr>
+        <tr>
+          <td><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#6366F1);display:flex;align-items:center;justify-content:center;font-size:14px">⚡</div><span style="font-weight:600">Trần Văn Minh</span></div></td>
+          <td>Thợ điện</td><td>VP Cầu Giấy</td>
+          <td style="font-family:'Noto Sans Mono',monospace;color:var(--green)">11.0M</td><td style="color:var(--amb)">⭐4.8</td>
+          <td><span class="pill p-g">Đang làm</span></td>
+          <td><button class="btn btn-xs btn-g" onclick="toast('Phân công Trần Văn Minh')">Phân công</button></td>
+        </tr>
+        <tr>
+          <td><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#A855F7);display:flex;align-items:center;justify-content:center;font-size:14px">🪵</div><span style="font-weight:600">Lê Minh Tuấn</span></div></td>
+          <td>Thợ mộc cao cấp</td><td>Nhà phố Đống Đa</td>
+          <td style="font-family:'Noto Sans Mono',monospace;color:var(--green)">14.0M</td><td style="color:var(--amb)">⭐5.0</td>
+          <td><span class="pill p-g">Đang làm</span></td>
+          <td><button class="btn btn-xs btn-g" onclick="toast('Phân công Lê Minh Tuấn')">Phân công</button></td>
+        </tr>
+        <tr>
+          <td><div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#FB923C,#F59E0B);display:flex;align-items:center;justify-content:center;font-size:14px">🎨</div><span style="font-weight:600">Phạm Thị Hoa</span></div></td>
+          <td>Thợ sơn</td><td>—</td>
+          <td style="font-family:'Noto Sans Mono',monospace;color:var(--green)">6.3M</td><td style="color:var(--amb)">⭐4.7</td>
+          <td><span class="pill p-t">Sẵn sàng</span></td>
+          <td><button class="btn btn-xs btn-g" onclick="toast('Phân công Phạm Thị Hoa')">Phân công</button></td>
+        </tr>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg" id="pg-contractor-finance">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">💰 Doanh thu & Escrow</div><button class="btn btn-ghost btn-sm" onclick="toast('Xuất báo cáo tài chính PDF')">📄 Xuất báo cáo</button></div>
+      <div class="grid-3" style="margin-bottom:16px">
+        <div style="background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(168,85,247,.06));border:1px solid rgba(99,102,241,.2);border-radius:14px;padding:16px">
+          <div style="font-size:11px;color:var(--ind);font-weight:700;margin-bottom:5px">💼 Escrow đang giữ</div>
+          <div style="font-family:'Noto Sans Mono',monospace;font-size:24px;font-weight:800;color:var(--ind)">256,000,000đ</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:4px">3 dự án · 6 milestone</div>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(34,197,94,.1),rgba(0,201,167,.06));border:1px solid rgba(34,197,94,.2);border-radius:14px;padding:16px">
+          <div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:5px">✅ Đã nhận tháng này</div>
+          <div style="font-family:'Noto Sans Mono',monospace;font-size:24px;font-weight:800;color:var(--green)">2,800,000,000đ</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:4px">▲ 18% vs tháng trước</div>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(245,158,11,.06));border:1px solid rgba(201,168,76,.2);border-radius:14px;padding:16px">
+          <div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:5px">📊 Lợi nhuận ròng</div>
+          <div style="font-family:'Noto Sans Mono',monospace;font-size:24px;font-weight:800;color:var(--gold)">840,000,000đ</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:4px">Margin 30% · Sau thuế</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="card-title-t">📋 Milestone thanh toán</div></div>
+        <table>
+          <thead><tr><th>Dự án</th><th>Milestone</th><th>Giá trị</th><th>Hạn</th><th>Trạng thái</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>Biệt thự 500m² Hà Đông</td><td>M2 — Hoàn thiện tầng 1</td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--ind)">320,000,000đ</td><td style="color:var(--text3)">Đang thực hiện</td><td><span class="pill p-b">Chờ duyệt</span></td><td><button class="btn btn-xs btn-t" onclick="toast('Yêu cầu thanh toán milestone')">Yêu cầu</button></td></tr>
+            <tr><td>VP Cầu Giấy 400m²</td><td>M3 — Hoàn thiện + MEP</td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--ind)">480,000,000đ</td><td style="color:var(--text3)">Khách xem xét</td><td><span class="pill p-gold">Đang chờ</span></td><td><button class="btn btn-xs btn-g" onclick="toast('Xem chi tiết milestone')">Chi tiết</button></td></tr>
+            <tr><td>Nhà phố 3T Đống Đa</td><td>M4 — Nghiệm thu & Bàn giao</td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--ind)">80,000,000đ</td><td style="color:var(--text3)">Chuẩn bị</td><td><span class="pill p-t">Sắp tới</span></td><td>—</td></tr>
+            <tr><td>Resort Hòa Bình</td><td>M1 — Xây thô</td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--ind)">180,000,000đ</td><td style="color:var(--green)">Đã nhận</td><td><span class="pill p-g">Đã release</span></td><td><button class="btn btn-xs btn-g" onclick="toast('Tải hoá đơn')">🧾</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SUPPLIER PAGES ═══ -->
+  <div class="pg" id="pg-supplier-overview">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">📊 Tổng quan gian hàng</div><span class="pill p-g">D2C Verified ✓</span></div>
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="stat-card"><div class="stat-ico">💰</div><div class="stat-val" style="color:var(--green)">4.8B</div><div class="stat-lbl">Doanh thu tháng</div><div class="stat-chg chg-up">▲ 23%</div></div>
+        <div class="stat-card"><div class="stat-ico">🛒</div><div class="stat-val" style="color:var(--c1)">156</div><div class="stat-lbl">Đơn hàng tháng</div><div class="stat-chg chg-up">▲ 31 đơn</div></div>
+        <div class="stat-card"><div class="stat-ico">👁️</div><div class="stat-val" style="color:var(--c2)">28.4K</div><div class="stat-lbl">Lượt xem sản phẩm</div><div class="stat-chg chg-up">▲ 12%</div></div>
+        <div class="stat-card"><div class="stat-ico">📦</div><div class="stat-val" style="color:var(--ind)">2,140</div><div class="stat-lbl">SP đang bán</div><div class="stat-chg" style="color:var(--text3)">35 sắp hết hàng</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">📊 Conversion funnel</div></div>
+          <div style="padding:5px 0"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span>Lượt xem</span><span style="font-weight:700">28,400</span></div><div class="prog-bar"><div class="prog-fill" style="width:100%;background:var(--c1)"></div></div></div>
+            <div style="padding:5px 0"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span>Click xem chi tiết</span><span style="font-weight:700">8,210</span></div><div class="prog-bar"><div class="prog-fill" style="width:29%;background:var(--c2)"></div></div></div>
+            <div style="padding:5px 0"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span>Thêm vào giỏ</span><span style="font-weight:700">4,200</span></div><div class="prog-bar"><div class="prog-fill" style="width:15%;background:var(--ind)"></div></div></div>
+            <div style="padding:5px 0"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span>Đặt hàng thành công</span><span style="font-weight:700">1,560</span></div><div class="prog-bar"><div class="prog-fill" style="width:5.5%;background:var(--gold)"></div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">🆕 Đơn hàng mới nhất</div><button class="btn btn-ghost btn-sm" onclick="setPage('supplier-orders')">Tất cả</button></div>
+          <div class="order-row" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+            <div style="flex:1"><div style="font-weight:700;font-size:12px">CT Hoàng Gia</div><div style="font-size:10px;color:var(--text3)">Xi măng PCB40 × 200 bao</div></div>
+            <div style="font-family:'Noto Sans Mono',monospace;font-size:12px;font-weight:700;color:var(--gold)">25,600,000đ</div>
+            <span class="pill p-gold">Mới</span>
+            <div style="font-size:10px;color:var(--text3)">5 phút trước</div>
+            <button class="btn btn-xs btn-green" onclick="toast('Xác nhận đơn · CT Hoàng Gia')">✓ Xác nhận</button>
+          </div>
+          <div class="order-row" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+            <div style="flex:1"><div style="font-weight:700;font-size:12px">Nhà thầu Lê Văn Dũng</div><div style="font-size:10px;color:var(--text3)">Thép CB240 × 2 tấn</div></div>
+            <div style="font-family:'Noto Sans Mono',monospace;font-size:12px;font-weight:700;color:var(--gold)">35,600,000đ</div>
+            <span class="pill p-b">Đang giao</span>
+            <div style="font-size:10px;color:var(--text3)">1h trước</div>
+            <button class="btn btn-xs btn-g" onclick="toast('Cập nhật tracking')">📍</button>
+          </div>
+          <div class="order-row" style="display:flex;align-items:center;gap:10px;padding:8px 0">
+            <div style="flex:1"><div style="font-weight:700;font-size:12px">CHN-5892</div><div style="font-size:10px;color:var(--text3)">Sơn Dulux 18L × 10</div></div>
+            <div style="font-family:'Noto Sans Mono',monospace;font-size:12px;font-weight:700;color:var(--gold)">7,800,000đ</div>
+            <span class="pill p-g">Hoàn thành</span>
+            <div style="font-size:10px;color:var(--text3)">2h trước</div>
+            <button class="btn btn-xs btn-g" onclick="toast('Xem chi tiết')">Chi tiết</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg" id="pg-supplier-products">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">📦 Quản lý sản phẩm</div>
+        <div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="toast('Import hàng loạt từ Excel')">📥 Bulk import</button><button class="btn btn-gold btn-sm" onclick="toast('Đăng sản phẩm mới')">+ Thêm sản phẩm</button></div>
+      </div>
+      <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.15);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:10px">
+        <span>⚠️</span><div><strong style="color:var(--red)">35 sản phẩm sắp hết hàng</strong> · Click để bổ sung tồn kho ngay</div>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="toast('Xem danh sách sản phẩm hết hàng')">Xem ngay</button>
+      </div>
+      <table>
+        <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th>Giá</th><th>Tồn kho</th><th>Đã bán/tháng</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+            <tr>
+              <td>🧱</td><td style="font-weight:600">Xi măng PCB40 bao 40kg</td><td>Xi măng</td>
+              <td style="font-family:'Noto Sans Mono',monospace">128,000đ</td><td>2,400 bao</td>
+              <td style="font-family:'Noto Sans Mono',monospace;color:var(--green)">186</td>
+              <td><span class="pill p-g">Đang bán</span></td>
+              <td><div style="display:flex;gap:4px"><button class="btn btn-xs btn-g" onclick="toast('Chỉnh sửa')">✏️</button><button class="btn btn-xs btn-g" onclick="toast('Cập nhật kho')">📦</button></div></td>
+            </tr>
+            <tr>
+              <td>🧱</td><td style="font-weight:600">Gạch ốp 60×60 vân đá</td><td>Gạch</td>
+              <td style="font-family:'Noto Sans Mono',monospace">85,000đ/m²</td><td>840 m²</td>
+              <td style="font-family:'Noto Sans Mono',monospace;color:var(--green)">124</td>
+              <td><span class="pill p-g">Đang bán</span></td>
+              <td><div style="display:flex;gap:4px"><button class="btn btn-xs btn-g" onclick="toast('Chỉnh sửa')">✏️</button><button class="btn btn-xs btn-g" onclick="toast('Cập nhật kho')">📦</button></div></td>
+            </tr>
+            <tr>
+              <td>🧱</td><td style="font-weight:600">Vữa trộn sẵn 25kg</td><td>Vữa</td>
+              <td style="font-family:'Noto Sans Mono',monospace">45,000đ</td><td style="color:var(--red)">58 bao ⚠️</td>
+              <td style="font-family:'Noto Sans Mono',monospace;color:var(--green)">89</td>
+              <td><span class="pill p-r">Sắp hết</span></td>
+              <td><div style="display:flex;gap:4px"><button class="btn btn-xs btn-gold" onclick="toast('Bổ sung kho khẩn')">📦 Bổ sung</button></div></td>
+            </tr>
+            <tr>
+              <td>🧱</td><td style="font-weight:600">Gạch đỏ tiêu chuẩn</td><td>Gạch</td>
+              <td style="font-family:'Noto Sans Mono',monospace">4,500đ/viên</td><td>12,000 viên</td>
+              <td style="font-family:'Noto Sans Mono',monospace;color:var(--green)">2,340</td>
+              <td><span class="pill p-g">Đang bán</span></td>
+              <td><div style="display:flex;gap:4px"><button class="btn btn-xs btn-g" onclick="toast('Chỉnh sửa')">✏️</button><button class="btn btn-xs btn-g" onclick="toast('Cập nhật kho')">📦</button></div></td>
+            </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="pg" id="pg-supplier-orders">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">🛒 Quản lý đơn hàng</div></div>
+      <div style="display:flex;gap:6px;margin-bottom:14px">
+        <button class="btn btn-ghost btn-sm on-filter" style="border-color:var(--gold);color:var(--gold)">Tất cả (156)</button>
+        <button class="btn btn-ghost btn-sm" onclick="toast('Filter đang xử lý')">⚙️ Mới (12)</button>
+        <button class="btn btn-ghost btn-sm" onclick="toast('Filter đang giao')">🚚 Đang giao (34)</button>
+        <button class="btn btn-ghost btn-sm" onclick="toast('Filter hoàn thành')">✅ Xong (110)</button>
+        <button class="btn btn-ghost btn-sm" onclick="toast('Filter trả hàng')">↩️ Trả hàng (5)</button>
+      </div>
+      <table>
+        <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Sản phẩm</th><th>Tổng tiền</th><th>Ngày đặt</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+        <tbody>
+          <tr>
+              <td style="font-family:'Noto Sans Mono',monospace;font-size:11px">#NXM-0891</td><td>CHN-1234</td>
+              <td>Xi măng × 20 bao + Gạch</td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--gold)">14,320,000đ</td>
+              <td style="color:var(--text3)">2 ngày trước</td><td><span class="pill p-g">Hoàn thành</span></td>
+              <td><button class="btn btn-xs btn-g" onclick="toast('Xem chi tiết #NXM-0891')">Chi tiết</button></td>
+            </tr>
+            <tr>
+              <td style="font-family:'Noto Sans Mono',monospace;font-size:11px">#NXM-0756</td><td>CHN-7823</td>
+              <td>Vữa xây 50kg × 100 bao</td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--gold)">4,500,000đ</td>
+              <td style="color:var(--text3)">5 ngày trước</td><td><span class="pill p-g">Hoàn thành</span></td>
+              <td><button class="btn btn-xs btn-g" onclick="toast('Xem chi tiết #NXM-0756')">Chi tiết</button></td>
+            </tr>
+            <tr>
+              <td style="font-family:'Noto Sans Mono',monospace;font-size:11px">#NXM-0612</td><td>NHT-2910</td>
+              <td>Xi măng PCB40 × 500 bao</td><td style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--gold)">64,000,000đ</td>
+              <td style="color:var(--text3)">1 tuần trước</td><td><span class="pill p-g">Hoàn thành</span></td>
+              <td><button class="btn btn-xs btn-g" onclick="toast('Xem chi tiết #NXM-0612')">Chi tiết</button></td>
+            </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="pg" id="pg-supplier-finance">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">💰 Tài chính gian hàng</div><button class="btn btn-ghost btn-sm" onclick="toast('Xuất hoá đơn tháng 4')">📄 Xuất hoá đơn</button></div>
+      <div class="grid-3" style="margin-bottom:16px">
+        <div style="background:linear-gradient(135deg,rgba(34,197,94,.1),rgba(0,201,167,.06));border:1px solid rgba(34,197,94,.2);border-radius:14px;padding:16px">
+          <div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:5px">✅ Số dư khả dụng</div>
+          <div style="font-family:'Noto Sans Mono',monospace;font-size:24px;font-weight:800;color:var(--green)">3,620,000,000đ</div>
+          <button class="btn btn-green btn-sm" style="margin-top:10px;width:100%;justify-content:center" onclick="openModal('withdrawModal')">💸 Rút về tài khoản</button>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(251,146,60,.06));border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:16px">
+          <div style="font-size:11px;color:var(--amb);font-weight:700;margin-bottom:5px">⏳ Escrow đang giữ</div>
+          <div style="font-family:'Noto Sans Mono',monospace;font-size:24px;font-weight:800;color:var(--amb)">1,180,000,000đ</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:6px">34 đơn đang giao</div>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(245,158,11,.06));border:1px solid rgba(239,68,68,.2);border-radius:14px;padding:16px">
+          <div style="font-size:11px;color:var(--red);font-weight:700;margin-bottom:5px">💼 Commission tháng này</div>
+          <div style="font-family:'Noto Sans Mono',monospace;font-size:24px;font-weight:800;color:var(--red)">192,000,000đ</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:6px">4% GMV · Gói Free</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="card-title-t">💳 B2B Credit — Khách hàng đang dùng</div><button class="btn btn-ghost btn-sm" onclick="toast('Quản lý chính sách B2B credit')">Quản lý</button></div>
+        <table>
+          <thead><tr><th>Khách hàng</th><th>Hạn mức</th><th>Đã dùng</th><th>Còn lại</th><th>Hạn thanh toán</th><th></th></tr></thead>
+          <tbody>
+            <tr>
+                <td style="font-weight:600">CT Hoàng Gia</td>
+                <td style="font-family:'Noto Sans Mono',monospace">500,000,000đ</td>
+                <td style="font-family:'Noto Sans Mono',monospace;color:var(--amb)">280,000,000đ</td>
+                <td style="font-family:'Noto Sans Mono',monospace;color:var(--green)">220,000,000đ</td>
+                <td>30/6/2025</td><td><span class="pill p-g">Bình thường</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">Công ty XD Minh Đức</td>
+                <td style="font-family:'Noto Sans Mono',monospace">150,000,000đ</td>
+                <td style="font-family:'Noto Sans Mono',monospace;color:var(--red)">150,000,000đ</td>
+                <td style="font-family:'Noto Sans Mono',monospace;color:var(--red)">0đ</td>
+                <td style="color:var(--red)">QUÁ HẠN 3 ngày</td><td><span class="pill p-r">⚠️ Quá hạn</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:600">Nhà thầu Lê Văn Dũng</td>
+                <td style="font-family:'Noto Sans Mono',monospace">200,000,000đ</td>
+                <td style="font-family:'Noto Sans Mono',monospace;color:var(--amb)">80,000,000đ</td>
+                <td style="font-family:'Noto Sans Mono',monospace;color:var(--green)">120,000,000đ</td>
+                <td>15/7/2025</td><td><span class="pill p-t">Bình thường</span></td>
+              </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS SHARED -->
+  <div class="pg" id="pg-notif">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">🔔 Tất cả thông báo</div><button class="btn btn-ghost btn-sm" onclick="toast('Đã đánh dấu tất cả đã đọc')">Đọc tất cả</button></div>
+      <div id="notifList"></div>
+    </div>
+  </div>
+
+
+
+
+</div><!-- end main -->
+</div><!-- end app -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// NAV CONFIG PER ROLE
+// ══════════════════════════════════════════
+const NAV = {
+  buyer:{
+    color:'var(--c1)',bg:'rgba(0,201,167,.08)',bdr:'rgba(0,201,167,.22)',
+    stats:[{v:'68.5M',l:'Chi tháng này',c:'var(--c1)'},{v:'32.4M',l:'Escrow bảo vệ',c:'var(--gold)'}],
+    sections:[
+      {label:'Tổng quan',items:[
+        {id:'buyer-overview',ico:'📊',lbl:'Tổng quan',badge:''},
+        {id:'buyer-projects',ico:'🏗️',lbl:'Công trình',badge:'2'},
+        {id:'buyer-workers',ico:'👷',lbl:'Thợ đã thuê',badge:'5'},
+        {id:'buyer-wallet',ico:'💳',lbl:'Ví & Thanh toán',badge:''},
+      ]},
+      {label:'Dịch vụ',items:[
+        {id:'',ico:'🎨',lbl:'NexDesign AI',badge:'New',link:'nexdesign-app.html'},
+        {id:'',ico:'📦',lbl:'Mua vật liệu',badge:'',link:'nexbuild-marketplace.html'},
+        {id:'',ico:'🔍',lbl:'Tìm thợ',badge:'',link:'nexbuild-marketplace.html#work'},
+      ]},
+      {label:'Khác',items:[
+        {id:'buyer-notif',ico:'🔔',lbl:'Thông báo',badge:'6',notif:true},
+      ]}
+    ]
+  },
+  worker:{
+    color:'var(--c2)',bg:'rgba(14,165,233,.08)',bdr:'rgba(14,165,233,.22)',
+    stats:[{v:'18.6M',l:'Thu tháng này',c:'var(--green)'},{v:'4.9★',l:'Rating',c:'var(--amb)'}],
+    sections:[
+      {label:'Tổng quan',items:[
+        {id:'worker-overview',ico:'📊',lbl:'Tổng quan',badge:''},
+        {id:'worker-bookings',ico:'🔔',lbl:'Booking requests',badge:'3',notif:true},
+        {id:'worker-jobs',ico:'🏗️',lbl:'Công việc đang làm',badge:'2'},
+        {id:'worker-earnings',ico:'💰',lbl:'Thu nhập & Ví',badge:''},
+      ]},
+      {label:'Hồ sơ',items:[
+        {id:'worker-portfolio',ico:'🗂️',lbl:'Portfolio',badge:''},
+        {id:'worker-reviews',ico:'⭐',lbl:'Đánh giá nhận được',badge:''},
+      ]},
+      {label:'Học tập',items:[
+        {id:'worker-academy',ico:'🎓',lbl:'NexAcademy',badge:'3 khóa'},
+      ]}
+    ]
+  },
+  contractor:{
+    color:'var(--ind)',bg:'rgba(99,102,241,.08)',bdr:'rgba(99,102,241,.22)',
+    stats:[{v:'3',l:'DA đang chạy',c:'var(--ind)'},{v:'2.8B',l:'DT tháng',c:'var(--green)'}],
+    sections:[
+      {label:'Tổng quan',items:[
+        {id:'contractor-overview',ico:'📊',lbl:'Tổng quan',badge:''},
+        {id:'contractor-bids',ico:'📋',lbl:'Đấu thầu',badge:'5'},
+        {id:'contractor-projects',ico:'🏗️',lbl:'Dự án đang chạy',badge:'3'},
+        {id:'contractor-team',ico:'👷',lbl:'Quản lý đội thợ',badge:'15'},
+        {id:'contractor-finance',ico:'💰',lbl:'Doanh thu & Escrow',badge:''},
+      ]},
+      {label:'Công cụ',items:[
+        {id:'',ico:'📦',lbl:'Đặt vật liệu BOQ',badge:'',link:'nexbuild-marketplace.html'},
+        {id:'',ico:'🔍',lbl:'Tìm công trình',badge:'3.2K',link:'nexbuild-marketplace.html'},
+      ]},
+    ]
+  },
+  supplier:{
+    color:'var(--gold)',bg:'rgba(201,168,76,.08)',bdr:'rgba(201,168,76,.22)',
+    stats:[{v:'4.8B',l:'DT tháng này',c:'var(--green)'},{v:'156',l:'Đơn hàng',c:'var(--c1)'}],
+    sections:[
+      {label:'Gian hàng',items:[
+        {id:'supplier-overview',ico:'📊',lbl:'Tổng quan',badge:''},
+        {id:'supplier-orders',ico:'🛒',lbl:'Đơn hàng',badge:'12',notif:true},
+        {id:'supplier-products',ico:'📦',lbl:'Sản phẩm',badge:'35⚠️',notif:true},
+        {id:'supplier-analytics',ico:'📈',lbl:'Analytics',badge:''},
+        {id:'supplier-finance',ico:'💰',lbl:'Tài chính',badge:''},
+      ]},
+      {label:'Bán hàng',items:[
+        {id:'',ico:'💳',lbl:'B2B Credit',badge:'',link:'#'},
+        {id:'',ico:'🏷️',lbl:'Khuyến mãi',badge:'',link:'#'},
+        {id:'',ico:'🤖',lbl:'BOQ AI Integration',badge:'New',link:'#'},
+      ]}
+    ]
+  },
+  admin:{
+    color:'var(--red)',bg:'rgba(239,68,68,.08)',bdr:'rgba(239,68,68,.22)',
+    stats:[{v:'2,847',l:'Users tổng',c:'var(--c1)'},{v:'4.8B',l:'GMV tháng',c:'var(--green)'}],
+    sections:[
+      {label:'System',items:[
+        {id:'admin-overview',ico:'📊',lbl:'Tổng quan hệ thống',badge:''},
+        {id:'admin-users',ico:'👥',lbl:'Quản lý Users',badge:'12 mới',notif:true},
+        {id:'admin-transactions',ico:'💰',lbl:'Giao dịch',badge:''},
+        {id:'admin-escrow',ico:'🔒',lbl:'Escrow Monitor',badge:''},
+      ]},
+      {label:'Nội dung',items:[
+        {id:'admin-products',ico:'📦',lbl:'Duyệt sản phẩm',badge:'8 chờ',notif:true},
+        {id:'admin-workers',ico:'👷',lbl:'Duyệt hồ sơ thợ',badge:'14 chờ',notif:true},
+        {id:'admin-projects',ico:'🏗️',lbl:'Duyệt công trình',badge:''},
+        {id:'admin-disputes',ico:'⚖️',lbl:'Khiếu nại',badge:'3',notif:true},
+      ]},
+      {label:'System',items:[
+        {id:'admin-analytics',ico:'📈',lbl:'Analytics toàn hệ thống',badge:''},
+        {id:'admin-settings',ico:'⚙️',lbl:'Cấu hình hệ thống',badge:''},
+        {id:'admin-security',ico:'🛡️',lbl:'Security & Log',badge:''},
+      ]}
+    ]
+  }
+};
+
+let currentRole = null;
+let currentPage = null;
+
+// ══ LOGIN ══
+function loginAs(role){
+  currentRole = role;
+  const n = NAV[role];
+  const names = {buyer:'Nguyễn Văn A',worker:'Thợ Lê Minh Tuấn',contractor:'CT Hoàng Gia',supplier:'Vicem Hải Phòng',admin:'Thiên Mộc Đức'};
+  const ids = {buyer:'CHN-1234',worker:'THO-9821',contractor:'NHT-5678',supplier:'NCC-0042',admin:'ADMIN-0001'};
+  const avs = {buyer:'🏠',worker:'👷',contractor:'🏗️',supplier:'🏭',admin:'⚡'};
+  
+  // Update profile
+  document.getElementById('spAv').style.background=`${n.bg.replace('.08',',.3')}`;
+  document.getElementById('spAv').style.border=`2px solid ${n.bdr.replace('.22',',.5')}`;
+  document.getElementById('spAv').innerHTML=`${avs[role]}<div class="sp-dot"></div>`;
+  document.getElementById('spName').textContent=names[role];
+  document.getElementById('spId').textContent=ids[role];
+  document.getElementById('spId').style.color=n.color;
+  
+  // Role badge
+  const roleNames={buyer:'Chủ nhà / CĐT',worker:'Thợ kỹ thuật',contractor:'Nhà thầu',supplier:'NCC D2C'};
+  document.getElementById('spRoleBadge').innerHTML=`<span class="sp-role" style="background:${n.bg};border-color:${n.bdr};color:${n.color}">${avs[role]} ${roleNames[role]}</span>`;
+  
+  // Stats
+  document.getElementById('spStats').innerHTML=n.stats.map(s=>`<div class="sps"><div class="sps-v" style="color:${s.c}">${s.v}</div><div class="sps-l">${s.l}</div></div>`).join('');
+  
+  // Nav
+  document.getElementById('sbNav').innerHTML=n.sections.map(sec=>`
+    <div class="sb-sec">${sec.label}</div>
+    ${sec.items.map(item=>`
+      <div class="si" id="nav-${item.id||'ext-'+Math.random()}" onclick="${item.link?`window.location.href='${item.link}'`:item.id?`setPage('${item.id}')`:''}" style="--si-bg:${n.bg};--si-bdr:${n.bdr};--si-c:${n.color}">
+        <div class="si-ic">${item.ico}</div>${item.lbl}
+        ${item.badge?`<span class="si-b">${item.badge}</span>`:''}
+        ${item.notif?`<div class="si-notif"></div>`:''}
+      </div>`).join('')}
+    <div class="si-div"></div>`).join('');
+  
+  // Topbar role btn
+  const roleNames2={buyer:'Chủ nhà',worker:'Thợ',contractor:'Nhà thầu',supplier:'NCC'};
+  document.getElementById('tbRoleBtn').textContent=`${avs[role]} ${roleNames2[role]}`;
+  document.getElementById('tbRoleBtn').onclick=showRoleSelect;
+  
+  // Default page
+  const defaultPages={buyer:'buyer-overview',worker:'worker-overview',contractor:'contractor-overview',supplier:'supplier-overview'};
+  setPage(defaultPages[role]);
+  toast(`✅ Đăng nhập thành công · ${roleNames[role]} · ID: ${ids[role]}`);
+}
+
+function showRoleSelect(){setPage('role-select')}
+
+// ══ PAGE NAVIGATION ══
+function setPage(id){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.si').forEach(s=>s.classList.remove('on'));
+  const pg=document.getElementById('pg-'+id);
+  if(pg)pg.classList.add('on');
+  const nav=document.getElementById('nav-'+id);
+  if(nav)nav.classList.add('on');
+  document.getElementById('tbBreadcrumb').textContent=id.split('-').map(w=>w[0].toUpperCase()+w.slice(1)).join(' · ');
+  currentPage=id;
+}
+
+// ══ MODALS ══
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function selPM(btn){btn.closest('div,div').querySelectorAll('.pm-card').forEach(b=>b.classList.remove('on'));btn.classList.add('on')}
+
+function doWithdraw(){
+  const amt=document.getElementById('withdrawAmt').value;
+  closeModal('withdrawModal');
+  toast(`💸 Đã gửi lệnh rút ${parseInt(amt||0).toLocaleString('vi')}đ · T+1 về tài khoản`);
+}
+function doTopup(){
+  const amt=document.getElementById('topupAmt').value;
+  closeModal('topupModal');
+  toast(`✅ Đã nạp ${parseInt(amt||0).toLocaleString('vi')}đ vào Escrow`);
+}
+
+// ══ THEME ══
+let isDark=true;
+function toggleTheme(){isDark=!isDark;document.documentElement.setAttribute('data-theme',isDark?'dark':'light');document.getElementById('themeBtn').textContent=isDark?'☀️':'🌙'}
+
+// ══ TOAST ══
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.transform='translateX(-50%) translateY(0)';clearTimeout(t._t);t._t=setTimeout(()=>{t.style.transform='translateX(-50%) translateY(80px)'},3200)}
+
+// ══ INIT ══
+setPage('role-select');
+</script>
+</body>
+</html>
+  <!-- ═══════════════ ADMIN PAGES ═══════════════ -->
+
+  <!-- ADMIN OVERVIEW -->
+  <div class="pg" id="pg-admin-overview">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">⚡ Tổng quan hệ thống</div><div style="font-size:11px;color:var(--green)">● Live · Realtime</div></div>
+
+      <div class="grid-4" style="margin-bottom:18px">
+        <div class="kpi a" style="background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2)">
+          <div class="kpi-l">Tổng Users</div><div class="kpi-v" style="color:var(--red)">2,847</div>
+          <div class="kpi-n" style="color:var(--green)">↑ +127 tuần này</div>
+        </div>
+        <div class="kpi a" style="background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2)">
+          <div class="kpi-l">GMV tháng</div><div class="kpi-v" style="color:var(--green)">4.8B</div>
+          <div class="kpi-n" style="color:var(--green)">↑ +23% MoM</div>
+        </div>
+        <div class="kpi a" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2)">
+          <div class="kpi-l">Escrow đang giữ</div><div class="kpi-v" style="color:var(--amber)">892M</div>
+          <div class="kpi-n">156 giao dịch active</div>
+        </div>
+        <div class="kpi a" style="background:rgba(99,102,241,.06);border-color:rgba(99,102,241,.2)">
+          <div class="kpi-l">Revenue NexBuild</div><div class="kpi-v" style="color:var(--ind)">186M</div>
+          <div class="kpi-n">Commission + SaaS</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">👥 Phân loại Users</div></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>🏠 Chủ nhà / CĐT</span><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--c1)">1,248</span></div>
+              <div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:44%;height:100%;background:var(--c1);border-radius:3px"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>👷 Thợ kỹ thuật</span><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--c2)">892</span></div>
+              <div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:31%;height:100%;background:var(--c2);border-radius:3px"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>🏗️ Nhà thầu</span><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--ind)">342</span></div>
+              <div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:12%;height:100%;background:var(--ind);border-radius:3px"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>🏭 Nhà cung cấp</span><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--gold)">365</span></div>
+              <div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:13%;height:100%;background:var(--gold);border-radius:3px"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">📋 Chờ duyệt hôm nay</div></div>
+          <div onclick="setPage('admin-products')" style="padding:10px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.18);border-radius:9px;cursor:pointer;margin-bottom:8px;transition:all .2s" onmouseover="this.style.background='rgba(245,158,11,.12)'" onmouseout="this.style.background='rgba(245,158,11,.07)'">
+            <div style="font-weight:700;font-size:12px">📦 Sản phẩm chờ duyệt</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px">8 sản phẩm từ 5 NCC · Gửi hôm nay</div>
+          </div>
+          <div onclick="setPage('admin-workers')" style="padding:10px;background:rgba(14,165,233,.07);border:1px solid rgba(14,165,233,.18);border-radius:9px;cursor:pointer;margin-bottom:8px;transition:all .2s" onmouseover="this.style.background='rgba(14,165,233,.12)'" onmouseout="this.style.background='rgba(14,165,233,.07)'">
+            <div style="font-weight:700;font-size:12px">👷 Hồ sơ thợ chờ verify</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px">14 hồ sơ · 6 có chứng chỉ đính kèm</div>
+          </div>
+          <div onclick="setPage('admin-disputes')" style="padding:10px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.18);border-radius:9px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(239,68,68,.12)'" onmouseout="this.style.background='rgba(239,68,68,.07)'">
+            <div style="font-weight:700;font-size:12px">⚖️ Khiếu nại chờ xử lý</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px">3 case · Hạn 48h · Escrow đang giữ 124M</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><div class="card-title-t">💰 Giao dịch gần đây</div><button class="btn btn-ghost btn-sm" onclick="setPage('admin-transactions')">Xem tất cả</button></div>
+        <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr>
+            <th style="text-align:left;padding:8px 12px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">Mã GD</th>
+            <th style="text-align:left;padding:8px 12px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">Người dùng</th>
+            <th style="text-align:left;padding:8px 12px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">Loại</th>
+            <th style="text-align:right;padding:8px 12px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">Số tiền</th>
+            <th style="text-align:center;padding:8px 12px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">TT</th>
+            <th style="padding:8px 12px;border-bottom:1px solid var(--bdr)"></th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="padding:9px 12px;font-family:'Noto Sans Mono',monospace;font-size:11px;color:var(--text3)">#NXM-0891</td><td style="padding:9px 12px;font-weight:600">Nguyễn Văn A</td><td style="padding:9px 12px;color:var(--text2)">Escrow kích hoạt</td><td style="padding:9px 12px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">+2,560,000đ</td><td style="padding:9px 12px;text-align:center"><span class="pill p-gold">Đang giữ</span></td><td style="padding:9px 12px"><button class="btn btn-ghost btn-sm" onclick="toast('Chi tiết NXM-0891')">Chi tiết</button></td></tr>
+            <tr><td style="padding:9px 12px;font-family:'Noto Sans Mono',monospace;font-size:11px;color:var(--text3)">#NXM-0842</td><td style="padding:9px 12px;font-weight:600">CT Hoàng Gia</td><td style="padding:9px 12px;color:var(--text2)">Release Escrow</td><td style="padding:9px 12px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">+18,900,000đ</td><td style="padding:9px 12px;text-align:center"><span class="pill p-g">Hoàn thành</span></td><td style="padding:9px 12px"><button class="btn btn-ghost btn-sm" onclick="toast('Chi tiết NXM-0842')">Chi tiết</button></td></tr>
+            <tr><td style="padding:9px 12px;font-family:'Noto Sans Mono',monospace;font-size:11px;color:var(--text3)">#NXM-0781</td><td style="padding:9px 12px;font-weight:600">Lê Minh Tuấn</td><td style="padding:9px 12px;color:var(--text2)">Thu nhập thợ</td><td style="padding:9px 12px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">+1,350,000đ</td><td style="padding:9px 12px;text-align:center"><span class="pill p-g">Đã trả</span></td><td style="padding:9px 12px"><button class="btn btn-ghost btn-sm" onclick="toast('Chi tiết NXM-0781')">Chi tiết</button></td></tr>
+            <tr><td style="padding:9px 12px;font-family:'Noto Sans Mono',monospace;font-size:11px;color:var(--text3)">#NXM-0712</td><td style="padding:9px 12px;font-weight:600">THO-6734</td><td style="padding:9px 12px;color:var(--text2)">Khiếu nại mở</td><td style="padding:9px 12px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--amber)">8,900,000đ</td><td style="padding:9px 12px;text-align:center"><span class="pill p-r">Đang xử lý</span></td><td style="padding:9px 12px"><button class="btn btn-ghost btn-sm" onclick="setPage('admin-disputes')">Xử lý</button></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN USERS -->
+  <div class="pg" id="pg-admin-users">
+    <div class="pg-inner">
+      <div class="sec-hdr">
+        <div class="sec-title">👥 Quản lý Users</div>
+        <div style="display:flex;gap:7px">
+          <input placeholder="Tìm tên, ID, email..." style="padding:7px 12px;border-radius:9px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--text);font-size:12px;font-family:'Noto Sans',sans-serif;outline:none;width:200px">
+          <button class="btn btn-ghost btn-sm" onclick="toast('Lọc theo vai trò')">Lọc ▾</button>
+          <button class="btn btn-teal btn-sm" onclick="toast('Xuất Excel danh sách users')">⬇ Excel</button>
+        </div>
+      </div>
+      <div style="border-radius:var(--r);border:1px solid var(--bdr);overflow:hidden">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:rgba(255,255,255,.03)">
+            <th style="text-align:left;padding:9px 14px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">User</th>
+            <th style="text-align:left;padding:9px 14px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">ID / Vai trò</th>
+            <th style="text-align:left;padding:9px 14px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">Ngày tham gia</th>
+            <th style="text-align:right;padding:9px 14px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">Giao dịch</th>
+            <th style="text-align:center;padding:9px 14px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">Trạng thái</th>
+            <th style="padding:9px 14px;border-bottom:1px solid var(--bdr)">Thao tác</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="padding:10px 14px"><div style="display:flex;align-items:center;gap:9px"><div style="width:32px;height:32px;border-radius:50%;background:rgba(0,201,167,.15);display:flex;align-items:center;justify-content:center;font-size:16px">🏠</div><div><div style="font-weight:700">Nguyễn Văn A</div><div style="font-size:10px;color:var(--text3)">chna@nexbuild.holdings</div></div></div></td><td style="padding:10px 14px"><div style="font-family:'Noto Sans Mono',monospace;font-size:11px">CHN-1234</div><span class="pill p-t" style="margin-top:3px">Chủ nhà</span></td><td style="padding:10px 14px;color:var(--text3);font-size:11px">12/01/2025</td><td style="padding:10px 14px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--c1)">14,322,000đ</td><td style="padding:10px 14px;text-align:center"><span class="pill p-g">Hoạt động</span></td><td style="padding:10px 14px"><div style="display:flex;gap:5px"><button class="btn btn-ghost btn-sm" onclick="toast('Xem profile CHN-1234')">Xem</button><button class="btn btn-ghost btn-sm" onclick="toast('Suspend CHN-1234')">⛔</button></div></td></tr>
+            <tr><td style="padding:10px 14px"><div style="display:flex;align-items:center;gap:9px"><div style="width:32px;height:32px;border-radius:50%;background:rgba(14,165,233,.15);display:flex;align-items:center;justify-content:center;font-size:16px">👷</div><div><div style="font-weight:700">Lê Minh Tuấn</div><div style="font-size:10px;color:var(--text3)">worker@nexbuild.holdings</div></div></div></td><td style="padding:10px 14px"><div style="font-family:'Noto Sans Mono',monospace;font-size:11px">THO-9821</div><span class="pill p-b" style="margin-top:3px">Thợ</span></td><td style="padding:10px 14px;color:var(--text3);font-size:11px">08/01/2025</td><td style="padding:10px 14px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--c1)">18,600,000đ</td><td style="padding:10px 14px;text-align:center"><span class="pill p-g">Verified ✓</span></td><td style="padding:10px 14px"><div style="display:flex;gap:5px"><button class="btn btn-ghost btn-sm" onclick="toast('Xem profile THO-9821')">Xem</button><button class="btn btn-ghost btn-sm" onclick="toast('Suspend THO-9821')">⛔</button></div></td></tr>
+            <tr><td style="padding:10px 14px"><div style="display:flex;align-items:center;gap:9px"><div style="width:32px;height:32px;border-radius:50%;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center;font-size:16px">🏗️</div><div><div style="font-weight:700">CT Hoàng Gia</div><div style="font-size:10px;color:var(--text3)">contractor@nexbuild.holdings</div></div></div></td><td style="padding:10px 14px"><div style="font-family:'Noto Sans Mono',monospace;font-size:11px">NHT-5678</div><span class="pill p-i" style="margin-top:3px">Nhà thầu</span></td><td style="padding:10px 14px;color:var(--text3);font-size:11px">03/01/2025</td><td style="padding:10px 14px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--c1)">145,000,000đ</td><td style="padding:10px 14px;text-align:center"><span class="pill p-g">Hạng A</span></td><td style="padding:10px 14px"><div style="display:flex;gap:5px"><button class="btn btn-ghost btn-sm" onclick="toast('Xem profile NHT-5678')">Xem</button><button class="btn btn-ghost btn-sm" onclick="toast('Suspend NHT-5678')">⛔</button></div></td></tr>
+            <tr><td style="padding:10px 14px"><div style="display:flex;align-items:center;gap:9px"><div style="width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,.15);display:flex;align-items:center;justify-content:center;font-size:16px">🏭</div><div><div style="font-weight:700">Vicem Hải Phòng</div><div style="font-size:10px;color:var(--text3)">vicem@nexbuild.holdings</div></div></div></td><td style="padding:10px 14px"><div style="font-family:'Noto Sans Mono',monospace;font-size:11px">NCC-0042</div><span class="pill p-gold" style="margin-top:3px">NCC D2C</span></td><td style="padding:10px 14px;color:var(--text3);font-size:11px">01/12/2024</td><td style="padding:10px 14px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--c1)">4,800,000,000đ</td><td style="padding:10px 14px;text-align:center"><span class="pill p-g">Verified D2C</span></td><td style="padding:10px 14px"><div style="display:flex;gap:5px"><button class="btn btn-ghost btn-sm" onclick="toast('Xem profile NCC-0042')">Xem</button><button class="btn btn-ghost btn-sm" onclick="toast('Suspend NCC-0042')">⛔</button></div></td></tr>
+            <tr><td style="padding:10px 14px"><div style="display:flex;align-items:center;gap:9px"><div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:16px">👤</div><div><div style="font-weight:700">Trần Văn Bình</div><div style="font-size:10px;color:var(--text3)">binh@gmail.com</div></div></div></td><td style="padding:10px 14px"><div style="font-family:'Noto Sans Mono',monospace;font-size:11px">CHN-8821</div><span class="pill p-t" style="margin-top:3px">Chủ nhà</span></td><td style="padding:10px 14px;color:var(--text3);font-size:11px">15/01/2025</td><td style="padding:10px 14px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--text3)">0đ</td><td style="padding:10px 14px;text-align:center"><span class="pill p-or">Chờ verify</span></td><td style="padding:10px 14px"><div style="display:flex;gap:5px"><button class="btn btn-teal btn-sm" onclick="toast('✅ Đã verify CHN-8821')">✅ Verify</button><button class="btn btn-ghost btn-sm" onclick="toast('Từ chối CHN-8821')">❌</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN PRODUCTS APPROVAL -->
+  <div class="pg" id="pg-admin-products">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">📦 Duyệt sản phẩm</div><span class="pill p-or">8 chờ duyệt</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+
+        <div class="card" style="display:flex;align-items:center;gap:14px">
+          <div style="width:50px;height:50px;border-radius:12px;background:rgba(0,201,167,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🧱</div>
+          <div style="flex:1"><div style="font-weight:700;font-size:13px">Xi măng PCB50 Plus đặc biệt</div><div style="font-size:11px;color:var(--text3)">Vicem Hải Phòng · 168,000đ/bao · Sản phẩm mới · 500 bao tồn kho · Gửi 30 phút trước</div></div>
+          <div style="display:flex;gap:7px;flex-shrink:0">
+            <button class="btn btn-teal btn-sm" onclick="this.closest('.card').style.opacity='.4';toast('✅ Đã duyệt: Xi măng PCB50 Plus')">✅ Duyệt</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Xem chi tiết sản phẩm')">Xem</button>
+            <button class="btn btn-sm" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red)" onclick="this.closest('.card').style.opacity='.4';toast('❌ Từ chối: Xi măng PCB50')">❌</button>
+          </div>
+        </div>
+
+        <div class="card" style="display:flex;align-items:center;gap:14px">
+          <div style="width:50px;height:50px;border-radius:12px;background:rgba(99,102,241,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🔩</div>
+          <div style="flex:1"><div style="font-weight:700;font-size:13px">Thép hình H200 S355 JR</div><div style="font-size:11px;color:var(--text3)">Hòa Phát Steel · 28,500đ/kg · D2C · Tối thiểu 2 tấn · Gửi 2 giờ trước</div></div>
+          <div style="display:flex;gap:7px;flex-shrink:0">
+            <button class="btn btn-teal btn-sm" onclick="this.closest('.card').style.opacity='.4';toast('✅ Đã duyệt: Thép hình H200')">✅ Duyệt</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Xem chi tiết thép H200')">Xem</button>
+            <button class="btn btn-sm" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red)" onclick="this.closest('.card').style.opacity='.4';toast('❌ Từ chối: Thép H200')">❌</button>
+          </div>
+        </div>
+
+        <div class="card" style="display:flex;align-items:center;gap:14px">
+          <div style="width:50px;height:50px;border-radius:12px;background:rgba(14,165,233,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🪟</div>
+          <div style="flex:1"><div style="font-weight:700;font-size:13px">Kính Low-E 8mm Argon</div><div style="font-size:11px;color:var(--text3)">Kính Việt · 520,000đ/m² · Nhập khẩu · Tiết kiệm năng lượng · Gửi 4 giờ trước</div></div>
+          <div style="display:flex;gap:7px;flex-shrink:0">
+            <button class="btn btn-teal btn-sm" onclick="this.closest('.card').style.opacity='.4';toast('✅ Đã duyệt: Kính Low-E 8mm')">✅ Duyệt</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Xem chi tiết kính')">Xem</button>
+            <button class="btn btn-sm" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red)" onclick="this.closest('.card').style.opacity='.4';toast('❌ Từ chối: Kính Low-E')">❌</button>
+          </div>
+        </div>
+
+        <div class="card" style="display:flex;align-items:center;gap:14px">
+          <div style="width:50px;height:50px;border-radius:12px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🎨</div>
+          <div style="flex:1"><div style="font-weight:700;font-size:13px">Sơn chịu nhiệt Jotun Pilot</div><div style="font-size:11px;color:var(--text3)">Jotun Vietnam · 285,000đ/lit · Công nghiệp · TCVN · Gửi hôm qua</div></div>
+          <div style="display:flex;gap:7px;flex-shrink:0">
+            <button class="btn btn-teal btn-sm" onclick="this.closest('.card').style.opacity='.4';toast('✅ Đã duyệt: Sơn Jotun Pilot')">✅ Duyệt</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Xem chi tiết sơn Jotun')">Xem</button>
+            <button class="btn btn-sm" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red)" onclick="this.closest('.card').style.opacity='.4';toast('❌ Từ chối: Sơn Jotun')">❌</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN WORKERS APPROVAL -->
+  <div class="pg" id="pg-admin-workers">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">👷 Duyệt hồ sơ thợ</div><span class="pill p-or">14 chờ verify</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0EA5E9,#6366F1);display:flex;align-items:center;justify-content:center;font-size:20px">👷</div>
+            <div style="flex:1"><div style="font-weight:700;font-size:14px">Nguyễn Văn Hùng</div><div style="font-size:11px;color:var(--text3)">Thợ điện · Cầu Giấy, HN · Gửi 1 giờ trước</div></div>
+            <div style="text-align:right"><div style="font-family:'Noto Sans Mono',monospace;font-size:20px;font-weight:800;color:var(--green)">92</div><div style="font-size:9px;color:var(--text3)">AI score</div></div>
+          </div>
+          <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--text2);margin-bottom:10px">📋 Chứng chỉ điện hạng A · 6 năm kinh nghiệm · Portfolio 18 công trình</div>
+          <div style="display:flex;gap:7px">
+            <button class="btn btn-teal btn-sm" onclick="this.closest('.card').style.opacity='.5';toast('✅ Verified: Nguyễn Văn Hùng · Hồ sơ live trên NexMarket')">✅ Verify & Approve</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Xem hồ sơ đầy đủ')">Xem hồ sơ</button>
+            <button class="btn btn-sm" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red)" onclick="this.closest('.card').style.opacity='.5';toast('❌ Từ chối hồ sơ')">❌ Từ chối</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#FB923C);display:flex;align-items:center;justify-content:center;font-size:20px">🔧</div>
+            <div style="flex:1"><div style="font-weight:700;font-size:14px">Trần Đức Nam</div><div style="font-size:11px;color:var(--text3)">Thợ nước · Đống Đa, HN · Gửi 3 giờ trước</div></div>
+            <div style="text-align:right"><div style="font-family:'Noto Sans Mono',monospace;font-size:20px;font-weight:800;color:var(--amber)">74</div><div style="font-size:9px;color:var(--text3)">AI score</div></div>
+          </div>
+          <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--text2);margin-bottom:10px">⚠️ Không có chứng chỉ · 3 năm kinh nghiệm · Ảnh CCCD hợp lệ</div>
+          <div style="display:flex;gap:7px">
+            <button class="btn btn-teal btn-sm" onclick="this.closest('.card').style.opacity='.5';toast('✅ Verified (cơ bản): Trần Đức Nam')">✅ Approve cơ bản</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Yêu cầu bổ sung chứng chỉ')">📋 Yêu cầu bổ sung</button>
+            <button class="btn btn-sm" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red)" onclick="this.closest('.card').style.opacity='.5';toast('❌ Từ chối hồ sơ')">❌</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#A855F7);display:flex;align-items:center;justify-content:center;font-size:20px">🪚</div>
+            <div style="flex:1"><div style="font-weight:700;font-size:14px">Lê Thị Hoà</div><div style="font-size:11px;color:var(--text3)">Thợ mộc · Hoàng Mai, HN · Gửi 5 giờ trước</div></div>
+            <div style="text-align:right"><div style="font-family:'Noto Sans Mono',monospace;font-size:20px;font-weight:800;color:var(--green)">88</div><div style="font-size:9px;color:var(--text3)">AI score</div></div>
+          </div>
+          <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--text2);margin-bottom:10px">📋 Portfolio 12 công trình · 5 năm KN · Đánh giá 4.9★ từ hệ thống cũ</div>
+          <div style="display:flex;gap:7px">
+            <button class="btn btn-teal btn-sm" onclick="this.closest('.card').style.opacity='.5';toast('✅ Verified: Lê Thị Hoà')">✅ Verify & Approve</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Xem portfolio đầy đủ')">Xem hồ sơ</button>
+            <button class="btn btn-sm" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red)" onclick="this.closest('.card').style.opacity='.5';toast('❌ Từ chối')">❌</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN DISPUTES -->
+  <div class="pg" id="pg-admin-disputes">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">⚖️ Xử lý khiếu nại</div><span class="pill p-r">3 đang mở</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <div class="card" style="border-color:rgba(239,68,68,.25)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div><div style="font-family:'Noto Sans Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:3px">#DSP-001 · KHẨN CẤP</div><div style="font-weight:700;font-size:13px">⚖️ Hàng không đúng mô tả</div></div>
+            <div style="text-align:right"><div style="font-family:'Noto Sans Mono',monospace;font-size:18px;font-weight:800;color:var(--amber)">8,900,000đ</div><div style="font-size:10px;color:var(--red);font-weight:700">⏰ 2 giờ còn lại</div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <div style="flex:1;padding:8px;background:rgba(0,201,167,.06);border:1px solid rgba(0,201,167,.15);border-radius:8px;font-size:11px"><div style="color:var(--text3);margin-bottom:2px">Bên mua</div><div style="font-weight:700">Nguyễn Văn A · CHN-1234</div></div>
+            <div style="flex:1;padding:8px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:8px;font-size:11px"><div style="color:var(--text3);margin-bottom:2px">Bên bán</div><div style="font-weight:700">Vicem HN · NCC-0042</div></div>
+          </div>
+          <div style="display:flex;gap:7px">
+            <button class="btn btn-teal btn-sm" onclick="this.closest('.card').style.opacity='.6';toast('✅ Hoàn tiền 8,900,000đ về CHN-1234 · Thông báo NCC')">✅ Hoàn tiền Bên mua</button>
+            <button class="btn btn-sm" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--amber)" onclick="this.closest('.card').style.opacity='.6';toast('💰 Release Escrow 8,900,000đ cho NCC-0042')">💰 Release Bên bán</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Mở chat 3 bên DSP-001')">💬 Chat 3 bên</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Xem bằng chứng DSP-001')">📸 Bằng chứng</button>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(245,158,11,.2)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div><div style="font-family:'Noto Sans Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:3px">#DSP-002</div><div style="font-weight:700;font-size:13px">⚖️ Thiếu hàng — 3m² kính</div></div>
+            <div style="text-align:right"><div style="font-family:'Noto Sans Mono',monospace;font-size:18px;font-weight:800;color:var(--amber)">4,200,000đ</div><div style="font-size:10px;color:var(--amber);font-weight:700">⏰ 18 giờ còn lại</div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <div style="flex:1;padding:8px;background:rgba(0,201,167,.06);border:1px solid rgba(0,201,167,.15);border-radius:8px;font-size:11px"><div style="color:var(--text3);margin-bottom:2px">Bên mua</div><div style="font-weight:700">CT Hoàng Gia · NHT-5678</div></div>
+            <div style="flex:1;padding:8px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:8px;font-size:11px"><div style="color:var(--text3);margin-bottom:2px">Bên bán</div><div style="font-weight:700">Kính Việt · NCC-0118</div></div>
+          </div>
+          <div style="display:flex;gap:7px">
+            <button class="btn btn-teal btn-sm" onclick="this.closest('.card').style.opacity='.6';toast('✅ Partial refund 1,560,000đ cho NHT-5678 · 3m² thiếu')">✅ Partial refund</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Yêu cầu NCC giao bổ sung 3m²')">📦 Yêu cầu giao bù</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Chat DSP-002')">💬 Chat</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div><div style="font-family:'Noto Sans Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:3px">#DSP-003</div><div style="font-weight:700;font-size:13px">⚖️ Chủ nhà không xác nhận nhận hàng</div></div>
+            <div style="text-align:right"><div style="font-family:'Noto Sans Mono',monospace;font-size:18px;font-weight:800;color:var(--amber)">1,350,000đ</div><div style="font-size:10px;color:var(--text3);font-weight:700">30 giờ còn lại</div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <div style="flex:1;padding:8px;background:rgba(0,201,167,.06);border:1px solid rgba(0,201,167,.15);border-radius:8px;font-size:11px"><div style="color:var(--text3);margin-bottom:2px">Thợ (Bên bán)</div><div style="font-weight:700">THO-6734</div></div>
+            <div style="flex:1;padding:8px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:8px;font-size:11px"><div style="color:var(--text3);margin-bottom:2px">Chủ nhà (Bên mua)</div><div style="font-weight:700">CHN-8821</div></div>
+          </div>
+          <div style="display:flex;gap:7px">
+            <button class="btn btn-teal btn-sm" onclick="this.closest('.card').style.opacity='.6';toast('✅ Auto-release 1,350,000đ cho THO-6734 sau 30h không phản hồi')">⏰ Auto-release sau 30h</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Ping CHN-8821 xác nhận')">📱 Ping Chủ nhà</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN ANALYTICS -->
+  <div class="pg" id="pg-admin-analytics">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">📈 Analytics toàn hệ thống</div></div>
+      <div class="grid-4" style="margin-bottom:18px">
+        <div class="kpi a"><div class="kpi-l">📦 GMV tháng</div><div class="kpi-v" style="color:var(--green)">4.8B</div><div class="kpi-n" style="color:var(--green)">↑ +23% MoM</div></div>
+        <div class="kpi a"><div class="kpi-l">💰 Revenue</div><div class="kpi-v" style="color:var(--c1)">186M</div><div class="kpi-n" style="color:var(--green)">↑ +31% MoM</div></div>
+        <div class="kpi a"><div class="kpi-l">👥 DAU</div><div class="kpi-v" style="color:var(--c2)">842</div><div class="kpi-n" style="color:var(--green)">↑ +18% WoW</div></div>
+        <div class="kpi a"><div class="kpi-l">⭐ NPS Score</div><div class="kpi-v" style="color:var(--amber)">72</div><div class="kpi-n" style="color:var(--green)">↑ +5 pts</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">💰 Revenue breakdown</div></div>
+          <div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Commission NCC</span><span style="font-weight:700;color:var(--gold)">45%</span></div><div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:45%;height:100%;background:var(--gold);border-radius:3px"></div></div></div>
+          <div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>SaaS Subscription</span><span style="font-weight:700;color:var(--c2)">28%</span></div><div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:28%;height:100%;background:var(--c2);border-radius:3px"></div></div></div>
+          <div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Booking fee thợ</span><span style="font-weight:700;color:var(--c1)">18%</span></div><div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:18%;height:100%;background:var(--c1);border-radius:3px"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Khác</span><span style="font-weight:700;color:var(--text3)">9%</span></div><div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:9%;height:100%;background:var(--text3);border-radius:3px"></div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">🗺️ Top tỉnh thành</div></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)"><div style="font-weight:700;color:var(--text3);width:18px;text-align:center">1</div><div style="flex:1"><div style="font-size:12px;font-weight:600">Hà Nội</div><div style="font-size:10px;color:var(--text3)">1,248 users</div></div><div style="font-size:11px;font-weight:700;color:var(--c1)">44%</div></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)"><div style="font-weight:700;color:var(--text3);width:18px;text-align:center">2</div><div style="flex:1"><div style="font-size:12px;font-weight:600">TP.HCM</div><div style="font-size:10px;color:var(--text3)">642 users</div></div><div style="font-size:11px;font-weight:700;color:var(--c1)">23%</div></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)"><div style="font-weight:700;color:var(--text3);width:18px;text-align:center">3</div><div style="flex:1"><div style="font-size:12px;font-weight:600">Đà Nẵng</div><div style="font-size:10px;color:var(--text3)">284 users</div></div><div style="font-size:11px;font-weight:700;color:var(--c1)">10%</div></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)"><div style="font-weight:700;color:var(--text3);width:18px;text-align:center">4</div><div style="flex:1"><div style="font-size:12px;font-weight:600">Cần Thơ</div><div style="font-size:10px;color:var(--text3)">192 users</div></div><div style="font-size:11px;font-weight:700;color:var(--c1)">7%</div></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0"><div style="font-weight:700;color:var(--text3);width:18px;text-align:center">5+</div><div style="flex:1"><div style="font-size:12px;font-weight:600">Các tỉnh khác</div><div style="font-size:10px;color:var(--text3)">481 users</div></div><div style="font-size:11px;font-weight:700;color:var(--c1)">16%</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN SETTINGS -->
+  <div class="pg" id="pg-admin-settings">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">⚙️ Cấu hình hệ thống</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">💰 Phí & Commission</div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:12px">Commission NCC D2C</span><div style="display:flex;gap:7px;align-items:center"><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--gold)">2.5%</span><button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="toast('Chỉnh sửa Commission NCC D2C')">✏️</button></div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:12px">Commission Booking thợ</span><div style="display:flex;gap:7px;align-items:center"><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--gold)">8%</span><button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="toast('Chỉnh sửa Commission thợ')">✏️</button></div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:12px">Phí Escrow</span><div style="display:flex;gap:7px;align-items:center"><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--gold)">0.5%</span><button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="toast('Chỉnh sửa phí Escrow')">✏️</button></div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:12px">Phí rút tiền nhanh</span><div style="display:flex;gap:7px;align-items:center"><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--gold)">2%</span><button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="toast('Chỉnh sửa phí rút tiền')">✏️</button></div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0"><span style="font-size:12px">NexERP cơ bản/tháng</span><div style="display:flex;gap:7px;align-items:center"><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--gold)">500K</span><button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="toast('Chỉnh sửa giá NexERP')">✏️</button></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="card-title-t">🔒 Bảo mật & Giới hạn</div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:12px">Rate limit API (req/min)</span><div style="display:flex;gap:7px;align-items:center"><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--c2)">100</span><button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="toast('Chỉnh sửa rate limit')">✏️</button></div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:12px">Max file upload (MB)</span><div style="display:flex;gap:7px;align-items:center"><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--c2)">10</span><button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="toast('Chỉnh sửa max upload')">✏️</button></div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:12px">Session timeout (phút)</span><div style="display:flex;gap:7px;align-items:center"><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--c2)">60</span><button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="toast('Chỉnh sửa session timeout')">✏️</button></div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:12px">Escrow auto-release (ngày)</span><div style="display:flex;gap:7px;align-items:center"><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--c2)">30</span><button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="toast('Chỉnh sửa Escrow timeout')">✏️</button></div></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0"><span style="font-size:12px">Max đơn hàng/ngày/user</span><div style="display:flex;gap:7px;align-items:center"><span style="font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--c2)">50</span><button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="toast('Chỉnh sửa max đơn')">✏️</button></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN SECURITY -->
+  <div class="pg" id="pg-admin-security">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">🛡️ Security & Audit Log</div></div>
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="kpi a" style="background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2)"><div class="kpi-l">🟢 System Status</div><div class="kpi-v" style="color:var(--green)">Tất cả OK</div></div>
+        <div class="kpi a" style="background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2)"><div class="kpi-l">🔐 Auth failures</div><div class="kpi-v" style="color:var(--amber)">12/24h</div></div>
+        <div class="kpi a" style="background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2)"><div class="kpi-l">🚫 Blocked IPs</div><div class="kpi-v" style="color:var(--red)">3 IPs</div><div class="kpi-n"><button class="btn btn-ghost btn-sm" onclick="toast('Xem 3 IPs bị block')">Xem</button></div></div>
+        <div class="kpi a"><div class="kpi-l">📋 Audit events</div><div class="kpi-v" style="color:var(--c2)">1,248</div><div class="kpi-n">hôm nay</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="card-title-t">📋 Audit Log gần đây</div><button class="btn btn-ghost btn-sm" onclick="toast('Tải xuống audit log CSV')">⬇ Export</button></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px"><span style="font-family:'Noto Sans Mono',monospace;color:var(--text3);width:40px;flex-shrink:0">09:34</span><span style="font-family:'Noto Sans Mono',monospace;color:var(--c2);width:80px;flex-shrink:0">CHN-1234</span><span style="flex:1;color:var(--text2)">LOGIN_SUCCESS</span><span style="font-family:'Noto Sans Mono',monospace;color:var(--text3)">118.68.x.x</span><span class="pill p-b">info</span></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px"><span style="font-family:'Noto Sans Mono',monospace;color:var(--text3);width:40px;flex-shrink:0">09:28</span><span style="font-family:'Noto Sans Mono',monospace;color:var(--c2);width:80px;flex-shrink:0">SYSTEM</span><span style="flex:1;color:var(--text2)">ESCROW_RELEASE · NXM-0842 · 18.9M</span><span style="font-family:'Noto Sans Mono',monospace;color:var(--text3)">internal</span><span class="pill p-g">success</span></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px"><span style="font-family:'Noto Sans Mono',monospace;color:var(--text3);width:40px;flex-shrink:0">09:15</span><span style="font-family:'Noto Sans Mono',monospace;color:var(--red);width:80px;flex-shrink:0">UNKNOWN</span><span style="flex:1;color:var(--text2)">LOGIN_FAILED × 3 · IP blocked 15 phút</span><span style="font-family:'Noto Sans Mono',monospace;color:var(--text3)">103.12.x.x</span><span class="pill p-r">warn</span></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px"><span style="font-family:'Noto Sans Mono',monospace;color:var(--text3);width:40px;flex-shrink:0">08:52</span><span style="font-family:'Noto Sans Mono',monospace;color:var(--c2);width:80px;flex-shrink:0">NCC-0042</span><span style="flex:1;color:var(--text2)">PRODUCT_SUBMITTED · Xi măng PCB50</span><span style="font-family:'Noto Sans Mono',monospace;color:var(--text3)">42.113.x.x</span><span class="pill p-b">info</span></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;font-size:11px"><span style="font-family:'Noto Sans Mono',monospace;color:var(--text3);width:40px;flex-shrink:0">08:30</span><span style="font-family:'Noto Sans Mono',monospace;color:var(--amber);width:80px;flex-shrink:0">ADMIN-001</span><span style="flex:1;color:var(--text2)">USER_SUSPENDED · THO-9234 · Vi phạm</span><span style="font-family:'Noto Sans Mono',monospace;color:var(--text3)">admin</span><span class="pill p-or">action</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN TRANSACTIONS (bonus) -->
+  <div class="pg" id="pg-admin-transactions">
+    <div class="pg-inner">
+      <div class="sec-hdr"><div class="sec-title">💰 Tất cả giao dịch</div><div style="display:flex;gap:7px"><button class="btn btn-ghost btn-sm" onclick="toast('Lọc theo loại')">Lọc ▾</button><button class="btn btn-teal btn-sm" onclick="toast('Xuất Excel giao dịch')">⬇ Excel</button></div></div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:rgba(255,255,255,.03)">
+            <th style="text-align:left;padding:9px 14px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">Mã GD</th>
+            <th style="text-align:left;padding:9px 14px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">User</th>
+            <th style="text-align:left;padding:9px 14px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">Loại</th>
+            <th style="text-align:right;padding:9px 14px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">Số tiền</th>
+            <th style="text-align:center;padding:9px 14px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--bdr)">TT</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="padding:9px 14px;font-family:'Noto Sans Mono',monospace;font-size:11px;color:var(--text3)">#NXM-0891</td><td style="padding:9px 14px;font-weight:600">Nguyễn Văn A</td><td style="padding:9px 14px;color:var(--text2)">Escrow kích hoạt</td><td style="padding:9px 14px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">+2,560,000đ</td><td style="padding:9px 14px;text-align:center"><span class="pill p-gold">Đang giữ</span></td></tr>
+            <tr><td style="padding:9px 14px;font-family:'Noto Sans Mono',monospace;font-size:11px;color:var(--text3)">#NXM-0842</td><td style="padding:9px 14px;font-weight:600">CT Hoàng Gia</td><td style="padding:9px 14px;color:var(--text2)">Release Escrow</td><td style="padding:9px 14px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">+18,900,000đ</td><td style="padding:9px 14px;text-align:center"><span class="pill p-g">Hoàn thành</span></td></tr>
+            <tr><td style="padding:9px 14px;font-family:'Noto Sans Mono',monospace;font-size:11px;color:var(--text3)">#NXM-0781</td><td style="padding:9px 14px;font-weight:600">Lê Minh Tuấn</td><td style="padding:9px 14px;color:var(--text2)">Thu nhập thợ</td><td style="padding:9px 14px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">+1,350,000đ</td><td style="padding:9px 14px;text-align:center"><span class="pill p-g">Đã trả</span></td></tr>
+            <tr><td style="padding:9px 14px;font-family:'Noto Sans Mono',monospace;font-size:11px;color:var(--text3)">#NXM-0743</td><td style="padding:9px 14px;font-weight:600">Vicem HN</td><td style="padding:9px 14px;color:var(--text2)">Commission NCC 2.5%</td><td style="padding:9px 14px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--green)">+64,000đ</td><td style="padding:9px 14px;text-align:center"><span class="pill p-g">Settled</span></td></tr>
+            <tr><td style="padding:9px 14px;font-family:'Noto Sans Mono',monospace;font-size:11px;color:var(--text3)">#NXM-0712</td><td style="padding:9px 14px;font-weight:600">THO-6734</td><td style="padding:9px 14px;color:var(--text2)">Khiếu nại — Escrow frozen</td><td style="padding:9px 14px;text-align:right;font-family:'Noto Sans Mono',monospace;font-weight:700;color:var(--amber)">8,900,000đ</td><td style="padding:9px 14px;text-align:center"><span class="pill p-r">Đang xử lý</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
