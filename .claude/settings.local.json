@@ -9,7 +9,15 @@
       "Bash(cp \"C:\\\\Users\\\\Admin\\\\Documents\\\\nexbuild-platform/tailwind.config.ts\" \"C:\\\\Users\\\\Admin\\\\Documents\\\\NexBuild-OS-Flatforrm/\")",
       "Bash(cp \"C:\\\\Users\\\\Admin\\\\Documents\\\\nexbuild-platform/postcss.config.mjs\" \"C:\\\\Users\\\\Admin\\\\Documents\\\\NexBuild-OS-Flatforrm/\")",
       "Bash(cp \"C:\\\\Users\\\\Admin\\\\Documents\\\\nexbuild-platform/.eslintrc.json\" \"C:\\\\Users\\\\Admin\\\\Documents\\\\NexBuild-OS-Flatforrm/\")",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(gh repo:*)",
+      "Bash(where gh:*)",
+      "Bash(winget install:*)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" auth status)",
+      "Bash(npm i:*)",
+      "Bash(npx vercel:*)",
+      "Bash(sed -n '8,475p' \"nexbuild-hub \\(8\\).html\")",
+      "Read(//tmp/**)"
     ]
   }
 }
