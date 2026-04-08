@@ -1,6 +1,7 @@
 import { ecosystems, getEcosystem } from "@/data/ecosystems";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { EcoIcon } from "@/components/EcoIcons";
 
 export function generateStaticParams() {
   return ecosystems.map((e) => ({ slug: e.slug }));
@@ -44,21 +45,10 @@ export default function EcosystemPage({ params }: { params: { slug: string } }) 
         {/* Header */}
         <div className="flex items-start gap-5 py-8 border-b mb-7" style={{ borderColor: "var(--bdr)" }}>
           <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl"
+            className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
             style={{ background: eco.colorBg, border: `1px solid ${eco.color}40` }}
           >
-            {eco.slug === "design" && "🎨"}
-            {eco.slug === "talent" && "👷"}
-            {eco.slug === "supply" && "📦"}
-            {eco.slug === "erp" && "📊"}
-            {eco.slug === "media" && "🎬"}
-            {eco.slug === "finance" && "💰"}
-            {eco.slug === "affiliates" && "🔗"}
-            {eco.slug === "academy" && "🎓"}
-            {eco.slug === "agent" && "🤖"}
-            {eco.slug === "connect" && "🔌"}
-            {eco.slug === "accounting" && "📒"}
-            {eco.slug === "market" && "🏪"}
+            <EcoIcon slug={eco.slug} size={28} />
           </div>
           <div>
             <h1

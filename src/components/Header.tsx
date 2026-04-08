@@ -5,25 +5,25 @@ import Link from "next/link";
 import { useTheme } from "@/components/ThemeProvider";
 
 const NAV_LINKS = [
-  { label: "He sinh thai", href: "/ecosystem" },
-  { label: "Giai phap", href: "/solutions" },
-  { label: "Bang gia", href: "/pricing" },
-  { label: "Ve chung toi", href: "/about" },
+  { label: "He sinh thai", href: "#ecosystem" },
+  { label: "Giai phap", href: "#solutions" },
+  { label: "Bang gia", href: "#pricing" },
+  { label: "Ve chung toi", href: "#about" },
 ];
 
 const ECOSYSTEM_MODULES = [
-  { tag: "KEY", name: "NexMarket", slug: "nexmarket", color: "#d4a017" },
-  { tag: "01", name: "NexDesign AI", slug: "nexdesign-ai", color: "#14b8a6" },
-  { tag: "02", name: "NexTalent", slug: "nextalent", color: "#3b82f6" },
-  { tag: "03", name: "NexSupply", slug: "nexsupply", color: "#f59e0b" },
-  { tag: "04", name: "NexERP", slug: "nexerp", color: "#6366f1" },
-  { tag: "05", name: "NexMedia", slug: "nexmedia", color: "#8b5cf6" },
-  { tag: "06", name: "NexFinance", slug: "nexfinance", color: "#22c55e" },
-  { tag: "07", name: "NexAffiliates", slug: "nexaffiliates", color: "#f97316" },
-  { tag: "08", name: "NexAcademy", slug: "nexacademy", color: "#6366f1" },
-  { tag: "09", name: "NexAgent AI", slug: "nexagent-ai", color: "#6366f1" },
-  { tag: "10", name: "NexConnect", slug: "nexconnect", color: "#3b82f6" },
-  { tag: "11", name: "NexAccounting", slug: "nexaccounting", color: "#22c55e" },
+  { tag: "KEY", name: "NexMarket", slug: "market", color: "#C9A84C" },
+  { tag: "01", name: "NexDesign AI", slug: "design", color: "#00C9A7" },
+  { tag: "02", name: "NexTalent", slug: "talent", color: "#0EA5E9" },
+  { tag: "03", name: "NexSupply", slug: "supply", color: "#F59E0B" },
+  { tag: "04", name: "NexERP", slug: "erp", color: "#6366F1" },
+  { tag: "05", name: "NexMedia", slug: "media", color: "#A855F7" },
+  { tag: "06", name: "NexFinance", slug: "finance", color: "#22C55E" },
+  { tag: "07", name: "NexAffiliates", slug: "affiliates", color: "#FB923C" },
+  { tag: "08", name: "NexAcademy", slug: "academy", color: "#6366F1" },
+  { tag: "09", name: "NexAgent AI", slug: "agent", color: "#6366F1" },
+  { tag: "10", name: "NexConnect", slug: "connect", color: "#0EA5E9" },
+  { tag: "11", name: "NexAccounting", slug: "accounting", color: "#22C55E" },
 ];
 
 export function Header() {
@@ -57,14 +57,39 @@ export function Header() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <span
-              className="text-xl font-bold bg-clip-text text-transparent"
-              style={{
-                backgroundImage: "linear-gradient(135deg, var(--c1), var(--c2, #6366f1))",
-              }}
-            >
-              NexBuild Holdings
-            </span>
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+              <path d="M16 2L28 9V23L16 30L4 23V9L16 2Z" stroke="url(#logoGrad)" strokeWidth="2" strokeLinejoin="round"/>
+              <circle cx="16" cy="16" r="4" fill="url(#logoGrad)" opacity="0.8"/>
+              <defs>
+                <linearGradient id="logoGrad" x1="4" y1="2" x2="28" y2="30">
+                  <stop stopColor="#00C9A7"/>
+                  <stop offset="1" stopColor="#0EA5E9"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div className="flex flex-col leading-tight">
+              <span
+                className="bg-clip-text text-transparent"
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 900,
+                  backgroundImage: "linear-gradient(135deg, #00C9A7, #0EA5E9)",
+                }}
+              >
+                NexBuild
+              </span>
+              <span
+                style={{
+                  fontSize: "9px",
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.15em",
+                  color: "var(--text3)",
+                }}
+              >
+                Holdings
+              </span>
+            </div>
           </Link>
 
           {/* Center nav — hidden on mobile */}
