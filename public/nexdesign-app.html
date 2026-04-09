@@ -298,13 +298,13 @@ tr:hover td{background:rgba(255,255,255,.03)}
   <div class="si" onclick="loadTemplate('Khách sạn boutique')"><div class="si-ic">🏨</div>Khách sạn</div>
   <div class="si-div"></div>
   <div class="sb-sec">NexBuild</div>
-  <div class="si" onclick="toast('Mở NexTalent — Tìm thợ thi công')"><div class="si-ic">👷</div>Tìm thợ → NexTalent</div>
-  <div class="si" onclick="toast('Mở NexSupply — Đặt vật liệu')"><div class="si-ic">📦</div>Đặt vật liệu → NexSupply</div>
+  <div class="si" onclick="window.open('/marketplace#work','_blank');toast('Đang mở NexTalent...')"><div class="si-ic">👷</div>Tìm thợ → NexTalent</div>
+  <div class="si" onclick="window.open('/marketplace#mat','_blank');toast('Đang mở NexSupply...')"><div class="si-ic">📦</div>Đặt vật liệu → NexSupply</div>
   <div class="plan-box">
     <div class="plan-lbl">Gói Free</div>
     <div class="plan-free-bar"><div class="plan-free-fill"></div></div>
     <div class="plan-free-txt">1 / 3 lượt hôm nay đã dùng</div>
-    <button class="plan-up" onclick="toast('Nâng cấp Pro 299K/tháng — Không giới hạn lượt')">👑 Nâng cấp Pro</button>
+    <button class="plan-up" onclick="toast('Nâng cấp Pro $19/tháng — Không giới hạn lượt')">👑 Nâng cấp Pro</button>
   </div>
 </div>
 
@@ -604,8 +604,8 @@ tr:hover td{background:rgba(255,255,255,.03)}
         <div class="pr-sec" id="actPanel" style="display:none">
           <div class="pr-lbl">⚡ Hành động tiếp theo</div>
           <div style="display:flex;flex-direction:column;gap:6px">
-            <button style="width:100%;padding:9px;border-radius:9px;background:linear-gradient(135deg,#00C9A7,#0EA5E9);border:none;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px" onclick="toast('Mở NexSupply — Đặt 6 hạng mục vật liệu ngay')">📦 Đặt vật liệu — NexSupply</button>
-            <button style="width:100%;padding:9px;border-radius:9px;background:linear-gradient(135deg,#0EA5E9,#6366F1);border:none;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px" onclick="toast('Mở NexTalent — Tìm thợ thi công')">👷 Tìm thợ thi công — NexTalent</button>
+            <button style="width:100%;padding:9px;border-radius:9px;background:linear-gradient(135deg,#00C9A7,#0EA5E9);border:none;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px" onclick="window.open('/marketplace#mat','_blank');toast('Đang mở NexSupply...')">📦 Đặt vật liệu — NexSupply</button>
+            <button style="width:100%;padding:9px;border-radius:9px;background:linear-gradient(135deg,#0EA5E9,#6366F1);border:none;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px" onclick="window.open('/marketplace#work','_blank');toast('Đang mở NexTalent...')">👷 Tìm thợ thi công — NexTalent</button>
             <button style="width:100%;padding:9px;border-radius:9px;background:transparent;border:1px solid var(--bdr2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif;transition:all .2s" onclick="toast('Tải BOQ về Excel')" onmouseover="this.style.borderColor='var(--c1)';this.style.color='var(--c1)'" onmouseout="this.style.borderColor='var(--bdr2)';this.style.color='var(--text2)'">⬇ Xuất BOQ Excel</button>
             <button style="width:100%;padding:9px;border-radius:9px;background:transparent;border:1px solid var(--bdr2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif;transition:all .2s" onclick="toast('Chia sẻ link thiết kế')" onmouseover="this.style.borderColor='var(--c1)';this.style.color='var(--c1)'" onmouseout="this.style.borderColor='var(--bdr2)';this.style.color='var(--text2)'">🔗 Chia sẻ thiết kế</button>
             <button style="width:100%;padding:9px;border-radius:9px;background:transparent;border:1px solid rgba(201,168,76,.3);color:var(--gold);font-size:11px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif" onclick="toast('Bật Shoppable: click đồ trong ảnh để mua ngay')">🛍️ Bật Shoppable Render</button>
@@ -634,12 +634,12 @@ tr:hover td{background:rgba(255,255,255,.03)}
     </div>
     <div class="hist-page">
       <div class="hist-filter">
-        <button class="hf on">Tất cả</button>
+        <button class="hf on" onclick="filHist(this,'all')">Tất cả</button>
         <button class="hf" onclick="filHist(this,'Hiện đại')">Hiện đại</button>
         <button class="hf" onclick="filHist(this,'Scandinavian')">Scandinavian</button>
         <button class="hf" onclick="filHist(this,'Japandi')">Japandi</button>
         <button class="hf" onclick="filHist(this,'Industrial')">Industrial</button>
-        <button class="hf" onclick="toast('Lọc thiết kế có BOQ')">Có BOQ</button>
+        <button class="hf" onclick="filHist(this,'boq')">Có BOQ</button>
       </div>
       <div class="hist-grid" id="histGrid">
         <!-- Cards generated by JS -->
@@ -676,8 +676,8 @@ tr:hover td{background:rgba(255,255,255,.03)}
           </tbody>
         </table>
         <div class="be-acts">
-          <button class="bea" style="background:linear-gradient(135deg,#00C9A7,#0EA5E9)" onclick="toast('Đặt tất cả vật liệu chưa đặt qua NexSupply')">📦 Đặt phần còn lại</button>
-          <button class="bea" style="background:linear-gradient(135deg,#0EA5E9,#6366F1)" onclick="toast('Tìm thợ thi công')">👷 Tìm thợ</button>
+          <button class="bea" style="background:linear-gradient(135deg,#00C9A7,#0EA5E9)" onclick="window.open('/marketplace#mat','_blank');toast('Đang mở NexSupply...')">📦 Đặt phần còn lại</button>
+          <button class="bea" style="background:linear-gradient(135deg,#0EA5E9,#6366F1)" onclick="window.open('/marketplace#work','_blank');toast('Đang mở NexTalent...')">👷 Tìm thợ</button>
           <button class="bea bea-g" onclick="toast('Xuất Excel')">⬇ Excel</button>
           <button class="bea bea-g" onclick="toast('Chia sẻ BOQ')">🔗 Chia sẻ</button>
         </div>
@@ -808,10 +808,13 @@ function openHistItem(id){const h=HIST_DATA.find(x=>x.id===id);if(!h)return;setP
 function filHist(btn,style){
   document.querySelectorAll('.hf').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  const filtered=style?HIST_DATA.filter(h=>h.tags.some(t=>t.includes(style))):HIST_DATA;
+  let filtered;
+  if(style==='all') filtered=HIST_DATA;
+  else if(style==='boq') filtered=HIST_DATA.filter(h=>h.boq&&h.boq!=='');
+  else filtered=HIST_DATA.filter(h=>h.tags.some(t=>t.includes(style)));
   document.getElementById('histGrid').innerHTML=buildHist(filtered);
 }
-function goBack(){if(window.history.length>1)window.history.back();else window.location.href='nexbuild-hub.html'}
+function goBack(){if(window.history.length>1)window.history.back();else window.location.href='/'}
 
 // ── THEME ──
 let isDark=true;
@@ -937,11 +940,18 @@ function startGenerate(){
     document.getElementById('ldPct').textContent=Math.round(fillPct)+'%';
   },150);
   // Get selected style
-  const selStyleEl=document.querySelector('.sc.on .sc-t');
+  const selStyleEl=document.querySelector('.sc.on .sc-lbl');
   const selStyle=selStyleEl?selStyleEl.textContent:'Hiện đại';
   const styleEn=STYLE_PROMPTS[selStyle]||STYLE_PROMPTS['Hiện đại'];
+  // Read slider values
+  const area=document.getElementById('rv1')?.textContent||'30m²';
+  const height=document.getElementById('rv2')?.textContent||'3.2m';
+  const budget=document.getElementById('rv3')?.textContent||'80M';
+  // Read active room type chips
+  const activeChips=Array.from(document.querySelectorAll('.chip.on')).map(c=>c.textContent).join(', ');
+  const roomContext=activeChips?', loại phòng: '+activeChips:'';
   // Generate 4 variants in parallel via Fal.ai
-  const basePrompt='professional interior design photograph, 8k, photorealistic, beautiful lighting, '+styleEn+', '+p;
+  const basePrompt='professional interior design photograph, 8k, photorealistic, beautiful lighting, '+styleEn+', '+p+', '+area+' room'+roomContext+', high ceiling '+height;
   const promises=VARIANT_STYLES.map((vs,i)=>callFalAI(basePrompt+', '+vs+' style, architectural digest quality'));
   let stepIdx=0;
   ldTimer=setInterval(()=>{
@@ -993,24 +1003,33 @@ function showResult(){
         if(existingArt){existingArt.innerHTML='<img src="'+generatedImages[0]+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px" alt="Render A">';}
       }
     }
-    // Show BOQ
+    // Show BOQ — dynamic based on slider values
+    const _a=parseInt(document.getElementById('rv1')?.textContent)||30;
+    const _b=parseInt(document.getElementById('rv3')?.textContent)||80;
+    const _san=Math.round(_a*450000/1000000*10)/10;
+    const _son=Math.round(_a*3.2*85000/1000000*10)/10;
+    const _tran=Math.round(_a*380000/1000000*10)/10;
+    const _dien=Math.round(_a*400000/1000000*10)/10;
+    const _sofa=18.5;
+    const _pk=4.5;
+    const _total=Math.round((_san+_son+_tran+_dien+_sofa+_pk)*10)/10;
     document.getElementById('boqContent').innerHTML=`
-      <div class="boq-item"><div><div class="bi-cat">Sàn</div><div class="bi-mat">Gỗ AC4 30m²</div></div><div class="bi-price">13.5M</div></div>
-      <div class="boq-item"><div><div class="bi-cat">Sơn tường</div><div class="bi-mat">Dulux Premium 95m²</div></div><div class="bi-price">8.1M</div></div>
-      <div class="boq-item"><div><div class="bi-cat">Trần thạch cao</div><div class="bi-mat">Phẳng + đèn âm</div></div><div class="bi-price">11.4M</div></div>
-      <div class="boq-item"><div><div class="bi-cat">Hệ điện</div><div class="bi-mat">Cadivi + Schneider</div></div><div class="bi-price">12.0M</div></div>
-      <div class="boq-item"><div><div class="bi-cat">Sofa Navy</div><div class="bi-mat">Vải bố L-shape</div></div><div class="bi-price">18.5M</div></div>
-      <div class="boq-item"><div><div class="bi-cat">Phụ kiện</div><div class="bi-mat">Đèn · Cây · Gương</div></div><div class="bi-price">4.5M</div></div>
-      <div class="boq-total-row"><div class="boq-total-l">Tổng dự toán</div><div class="boq-total-v">~68M</div></div>
+      <div class="boq-item"><div><div class="bi-cat">Sàn</div><div class="bi-mat">Gỗ AC4 `+_a+`m²</div></div><div class="bi-price">`+_san+`M</div></div>
+      <div class="boq-item"><div><div class="bi-cat">Sơn tường</div><div class="bi-mat">Dulux Premium `+Math.round(_a*3.2)+`m²</div></div><div class="bi-price">`+_son+`M</div></div>
+      <div class="boq-item"><div><div class="bi-cat">Trần thạch cao</div><div class="bi-mat">Phẳng + đèn âm `+_a+`m²</div></div><div class="bi-price">`+_tran+`M</div></div>
+      <div class="boq-item"><div><div class="bi-cat">Hệ điện</div><div class="bi-mat">Cadivi + Schneider</div></div><div class="bi-price">`+_dien+`M</div></div>
+      <div class="boq-item"><div><div class="bi-cat">Sofa</div><div class="bi-mat">Sofa góc L-shape vải bố</div></div><div class="bi-price">`+_sofa+`M</div></div>
+      <div class="boq-item"><div><div class="bi-cat">Phụ kiện</div><div class="bi-mat">Đèn · Cây · Gương</div></div><div class="bi-price">`+_pk+`M</div></div>
+      <div class="boq-total-row"><div class="boq-total-l">Tổng dự toán</div><div class="boq-total-v">~`+Math.round(_total)+`M</div></div>
       <div class="boq-act-grid">
-        <button class="bab" style="background:linear-gradient(135deg,#00C9A7,#0EA5E9)" onclick="toast('Đặt vật liệu → NexSupply')">📦 Đặt ngay</button>
-        <button class="bab" style="background:linear-gradient(135deg,#0EA5E9,#6366F1)" onclick="toast('Tìm thợ → NexTalent')">👷 Tìm thợ</button>
+        <button class="bab" style="background:linear-gradient(135deg,#00C9A7,#0EA5E9)" onclick="window.open('/marketplace#mat','_blank');toast('Đang mở NexSupply...')">📦 Đặt ngay</button>
+        <button class="bab" style="background:linear-gradient(135deg,#0EA5E9,#6366F1)" onclick="window.open('/marketplace#work','_blank');toast('Đang mở NexTalent...')">👷 Tìm thợ</button>
         <button class="bab bab-g" onclick="toast('Xuất BOQ Excel')">⬇ Excel</button>
         <button class="bab bab-g" onclick="toast('Lưu BOQ')">💾 Lưu</button>
       </div>`;
     document.getElementById('matPanel').style.display='block';
     document.getElementById('actPanel').style.display='block';
-    document.getElementById('aiTip').innerHTML='<strong style="color:var(--c1)">💡 Gợi ý AI:</strong> Phương án A phù hợp nhất với ngân sách 80M. Chọn gỗ công nghiệp AC4 thay AC5 để tiết kiệm ~5M mà vẫn đảm bảo chất lượng. Nên đặt thợ sàn và thợ sơn cùng lúc để tối ưu lịch.';
+    document.getElementById('aiTip').innerHTML='<strong style="color:var(--c1)">💡 Gợi ý AI:</strong> Phương án A phù hợp nhất với ngân sách '+_b+'M. Diện tích '+_a+'m² — chọn gỗ công nghiệp AC4 thay AC5 để tiết kiệm ~5M. Tổng dự toán ~'+Math.round(_total)+'M. Nên đặt thợ sàn và thợ sơn cùng lúc để tối ưu lịch.';
     showSingle(0);
     toast('✨ 4 phương án đã tạo xong! BOQ tự động đã sẵn sàng.');
   },500);
