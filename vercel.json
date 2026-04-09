@@ -2,11 +2,19 @@
   "buildCommand": "",
   "installCommand": "echo 'skip'",
   "outputDirectory": "public",
+  "cleanUrls": true,
+  "trailingSlash": false,
   "rewrites": [
     { "source": "/dashboard", "destination": "/dashboard.html" },
     { "source": "/marketplace", "destination": "/marketplace.html" },
     { "source": "/nexdesign", "destination": "/nexdesign-app.html" },
     { "source": "/nexdesign-ai", "destination": "/nexdesign-landing.html" }
+  ],
+  "redirects": [
+    { "source": "/nexdesign-app.html", "destination": "/nexdesign", "permanent": true },
+    { "source": "/nexdesign-landing.html", "destination": "/nexdesign-ai", "permanent": true },
+    { "source": "/dashboard.html", "destination": "/dashboard", "permanent": true },
+    { "source": "/marketplace.html", "destination": "/marketplace", "permanent": true }
   ],
   "headers": [
     {
