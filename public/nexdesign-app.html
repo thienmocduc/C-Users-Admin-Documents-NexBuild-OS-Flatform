@@ -843,6 +843,14 @@ function showSingle(idx){
   document.getElementById('singleRender').classList.add('on');
   document.getElementById('srInfo').textContent=RENDER_INFO[idx]||RENDER_INFO[0];
   document.getElementById('shopBtn').style.display='flex';
+  // Show real image in single view
+  if(generatedImages&&generatedImages[idx]){
+    const art=document.getElementById('renderArtA');
+    if(art)art.innerHTML='<img src="'+generatedImages[idx]+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px" alt="Render '+idx+'">';
+  }
+}
+function downloadImg(url,name){
+  const a=document.createElement('a');a.href=url;a.download=name;a.target='_blank';document.body.appendChild(a);a.click();a.remove();
 }
 function setRT(btn){document.querySelectorAll('.rt').forEach(r=>r.classList.remove('on'));btn.classList.add('on')}
 let shopOn=false;
@@ -884,6 +892,35 @@ const ldSteps=[
   {t:'Hoàn tất! Đang tải kết quả...',s:'Chuẩn bị hiển thị và phân tích Shoppable',pct:92},
 ];
 let ldIdx=0,fillPct=0,fillTimer=null;
+// ── FAL.AI CONFIG ──
+const FAL_KEY='39c10d06-7140-4f34-85e7-a90cddeaa222:37d42073a0bbeb80a7fa';
+const FAL_URL='https://fal.ai/api/proxy';
+const STYLE_PROMPTS={
+  'Hiện đại':'modern minimalist interior design, clean lines, neutral tones with bold accents',
+  'Scandinavian':'scandinavian interior design, warm wood, white walls, natural light, cozy textiles',
+  'Tối giản':'minimalist japanese interior, clean, uncluttered, natural materials, zen aesthetic',
+  'Tân cổ điển':'neoclassical interior design, elegant moldings, marble, chandelier, luxurious',
+  'Wabi-Sabi':'wabi-sabi interior design, imperfect beauty, natural textures, earthy tones',
+  'Japandi':'japandi interior design, japanese meets scandinavian, neutral, wood, minimal',
+  'Industrial':'industrial loft interior, exposed brick, metal pipes, concrete, edison bulbs',
+  'Đông Dương':'indochine interior design, vietnamese colonial, tropical wood, ceramic, rattan'
+};
+const VARIANT_STYLES=['modern luxury','scandinavian warm','japandi zen','industrial raw'];
+const VARIANT_LABELS=['A — Hiện đại','B — Scandinavian','C — Japandi','D — Industrial'];
+let generatedImages=[];
+
+async function callFalAI(prompt){
+  try{
+    const resp=await fetch('https://fal.run/fal-ai/flux/schnell',{
+      method:'POST',
+      headers:{'Authorization':'Key '+FAL_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({prompt:prompt,image_size:'landscape_16_9',num_inference_steps:4})
+    });
+    const data=await resp.json();
+    return data.images?.[0]?.url||null;
+  }catch(e){console.error('Fal.ai error:',e);return null;}
+}
+
 function startGenerate(){
   const p=document.getElementById('promptTxt').value.trim();
   if(!p){toast('Vui lòng mô tả không gian trước!');return;}
@@ -892,22 +929,38 @@ function startGenerate(){
   document.getElementById('cvResult').classList.remove('on');
   [1,2,3,4,5].forEach(i=>document.getElementById('ld'+i).className='ld-dot');
   document.getElementById('ld1').classList.add('act');
-  ldIdx=0;fillPct=0;
+  ldIdx=0;fillPct=0;generatedImages=[];
   clearInterval(ldTimer);clearInterval(fillTimer);
   applyLdStep(0);
   fillTimer=setInterval(()=>{
-    fillPct=Math.min(fillPct+1.2,95);
+    fillPct=Math.min(fillPct+0.8,92);
     document.getElementById('ldFill').style.width=fillPct+'%';
     document.getElementById('ldPct').textContent=Math.round(fillPct)+'%';
-  },120);
+  },150);
+  // Get selected style
+  const selStyleEl=document.querySelector('.sc.on .sc-t');
+  const selStyle=selStyleEl?selStyleEl.textContent:'Hiện đại';
+  const styleEn=STYLE_PROMPTS[selStyle]||STYLE_PROMPTS['Hiện đại'];
+  // Generate 4 variants in parallel via Fal.ai
+  const basePrompt='professional interior design photograph, 8k, photorealistic, beautiful lighting, '+styleEn+', '+p;
+  const promises=VARIANT_STYLES.map((vs,i)=>callFalAI(basePrompt+', '+vs+' style, architectural digest quality'));
+  let stepIdx=0;
   ldTimer=setInterval(()=>{
-    ldIdx++;
-    if(ldIdx>=ldSteps.length){clearInterval(ldTimer);clearInterval(fillTimer);showResult();return;}
-    document.getElementById('ld'+ldIdx).classList.remove('act');
-    document.getElementById('ld'+ldIdx).classList.add('done');
-    document.getElementById('ld'+(ldIdx+1))?.classList.add('act');
-    applyLdStep(ldIdx);
-  },2200);
+    stepIdx++;
+    if(stepIdx>=ldSteps.length){clearInterval(ldTimer);return;}
+    document.getElementById('ld'+stepIdx).classList.remove('act');
+    document.getElementById('ld'+stepIdx).classList.add('done');
+    document.getElementById('ld'+(stepIdx+1))?.classList.add('act');
+    applyLdStep(stepIdx);
+  },3000);
+  Promise.all(promises).then(imgs=>{
+    generatedImages=imgs;
+    clearInterval(ldTimer);clearInterval(fillTimer);
+    showResult();
+  }).catch(()=>{
+    clearInterval(ldTimer);clearInterval(fillTimer);
+    showResult();
+  });
 }
 function applyLdStep(i){
   if(i>=ldSteps.length)return;
@@ -923,6 +976,24 @@ function showResult(){
     document.getElementById('cvResult').classList.add('on');
     document.getElementById('cv-title').textContent='4 phương án thiết kế · BOQ tự động';
     document.getElementById('shopBtn').style.display='flex';
+    // Replace CSS art with real Fal.ai images
+    if(generatedImages&&generatedImages.length>0){
+      const frames=document.querySelectorAll('.r4grid .rcard .rframe');
+      const labels=VARIANT_LABELS;
+      frames.forEach((f,i)=>{
+        const imgUrl=generatedImages[i];
+        if(imgUrl){
+          f.style.background='none';
+          f.innerHTML='<img src="'+imgUrl+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0" alt="'+labels[i]+'"><div class="rf-label">'+labels[i]+'</div><div class="rf-opts"><div class="rf-opt" onclick="event.stopPropagation();window.open(\''+imgUrl+'\')">⛶</div><div class="rf-opt" onclick="event.stopPropagation();downloadImg(\''+imgUrl+'\',\'nexdesign-'+i+'.png\')">⬇</div></div>'+(i===0?'<div class="rf-sel">✓ Đã chọn</div>':'');
+        }
+      });
+      // Update single view canvas
+      const srCanvas=document.getElementById('srCanvas');
+      if(srCanvas&&generatedImages[0]){
+        const existingArt=document.getElementById('renderArtA');
+        if(existingArt){existingArt.innerHTML='<img src="'+generatedImages[0]+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px" alt="Render A">';}
+      }
+    }
     // Show BOQ
     document.getElementById('boqContent').innerHTML=`
       <div class="boq-item"><div><div class="bi-cat">Sàn</div><div class="bi-mat">Gỗ AC4 30m²</div></div><div class="bi-price">13.5M</div></div>
