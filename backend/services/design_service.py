@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.models.user import User
 from backend.models.design import BOQItem, Design, DesignRender
 from backend.services.gemini_service import generate_design
+from backend.services.fal_service import generate_design_images
 
 
 async def check_quota(user: User, db: AsyncSession) -> dict:
@@ -94,16 +95,29 @@ async def create_design(
     design.ai_response = ai_result
     design.completed_at = datetime.now(timezone.utc)
 
-    # Save renders
+    # Generate images via Fal.ai (server-side — key in .env, NOT client)
     variants = ai_result.get("variants", [])
-    for v in variants:
+    variant_descriptions = [v.get("description", "") for v in variants]
+    image_urls = await generate_design_images(
+        prompt=prompt,
+        style=style,
+        area_m2=area_m2 or 30,
+        room_type=room_type or "living room",
+        variant_descriptions=variant_descriptions,
+        count=len(variants),
+    )
+
+    # Save renders with image URLs
+    for i, v in enumerate(variants):
+        img_url = image_urls[i] if i < len(image_urls) else None
+        v["image_url"] = img_url  # Enrich response
         render = DesignRender(
             design_id=design.id,
             variant_idx=v["variant_idx"],
             style_label=v["style_label"],
             description=v["description"],
-            image_url=v.get("image_url"),
-            thumbnail_url=v.get("thumbnail_url"),
+            image_url=img_url,
+            thumbnail_url=img_url,  # Same for Phase 1
         )
         db.add(render)
 
@@ -133,5 +147,6 @@ async def create_design(
         "variants": variants,
         "boq_items": boq_items,
         "boq_total": boq_total,
+        "scene_3d": ai_result.get("scene_3d"),
         "message": "4 phương án thiết kế đã sẵn sàng!",
     }

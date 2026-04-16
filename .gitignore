@@ -38,3 +38,13 @@ node_modules/
 next-env.d.ts
 
 .vercel
+
+# Uploads (user-generated, not tracked)
+uploads/
+
+# Docker
+*.log
+
+# Production env template is tracked, real .env is not
+# .env.production is a template — rename to .env.production.example if needed
+*.db

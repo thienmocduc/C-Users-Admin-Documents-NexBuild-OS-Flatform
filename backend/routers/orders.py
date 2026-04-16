@@ -336,3 +336,73 @@ async def reorder(
             count += 1
 
     return {"message": f"Đã thêm {count} sản phẩm vào giỏ", "ok": True}
+
+
+@order_router.patch("/{order_id}/cancel")
+async def cancel_order(
+    order_id: UUID,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Hủy đơn hàng (chỉ khi đang processing)."""
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(404, "Đơn hàng không tồn tại")
+    if order.buyer_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(403, "Không có quyền hủy đơn này")
+    if order.status != "processing":
+        raise HTTPException(400, f"Đơn hàng đang ở trạng thái '{order.status}', không thể hủy")
+
+    order.status = "cancelled"
+
+    # Refund escrow
+    if order.escrow_id:
+        escrow_result = await db.execute(select(Escrow).where(Escrow.id == order.escrow_id))
+        escrow = escrow_result.scalar_one_or_none()
+        if escrow and escrow.status == "held":
+            escrow.status = "refunded"
+            escrow.released_at = datetime.now(timezone.utc)
+
+    await db.commit()
+    return {"message": "Đã hủy đơn hàng", "ok": True}
+
+
+@order_router.get("/{order_id}/invoice")
+async def get_invoice(
+    order_id: UUID,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Lấy thông tin hóa đơn (JSON). PDF export ở Phase 2."""
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(404, "Đơn hàng không tồn tại")
+    if order.buyer_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(403, "Không có quyền xem hóa đơn này")
+
+    return {
+        "invoice_number": f"INV-{order.order_number}",
+        "order_number": order.order_number,
+        "date": order.created_at.strftime("%d/%m/%Y"),
+        "buyer": {
+            "name": order.receiver_name or current_user.full_name,
+            "phone": order.receiver_phone,
+            "address": order.shipping_address,
+        },
+        "items": [
+            {
+                "name": i.product_name,
+                "quantity": i.quantity,
+                "unit_price": i.unit_price,
+                "total": i.total,
+            }
+            for i in order.items
+        ],
+        "subtotal": order.subtotal,
+        "vat": order.vat,
+        "total": order.total,
+        "payment_method": order.payment_method,
+        "status": order.status,
+    }

@@ -85,6 +85,19 @@ from api.routers.wallet import router as wallet_router
 from api.routers.stats import stats_router, admin_router
 from api.routers.forum import forum_router, review_router, notif_router
 from backend.routers.design import router as design_router
+# Phase 1 — New routers
+from api.routers.chat import router as chat_router
+from api.routers.contracts import router as contracts_router
+from api.routers.suppliers import router as suppliers_router
+from api.routers.contractor_teams import router as contractor_team_router
+from api.routers.escrow_router import router as escrow_router
+from api.routers.disputes_router import router as disputes_router
+from api.routers.upload import router as upload_router
+from api.routers.boq import router as boq_router
+# WebSocket routers
+from api.routers.ws_chat import router as ws_chat_router
+from api.routers.ws_notifications import router as ws_notifications_router
+from api.routers.ws_gps import router as ws_gps_router
 
 API = settings.API_PREFIX
 
@@ -104,6 +117,19 @@ app.include_router(forum_router, prefix=API)
 app.include_router(review_router, prefix=API)
 app.include_router(notif_router, prefix=API)
 app.include_router(design_router, prefix=API)
+# Phase 1 — New routers
+app.include_router(chat_router, prefix=API)
+app.include_router(contracts_router, prefix=API)
+app.include_router(suppliers_router, prefix=API)
+app.include_router(contractor_team_router, prefix=API)
+app.include_router(escrow_router, prefix=API)
+app.include_router(disputes_router, prefix=API)
+app.include_router(upload_router, prefix=API)
+app.include_router(boq_router, prefix=API)
+# WebSocket routers (no API prefix — ws:// paths)
+app.include_router(ws_chat_router)
+app.include_router(ws_notifications_router)
+app.include_router(ws_gps_router)
 
 
 # ─── Health Check ─────────────────────────────────────────

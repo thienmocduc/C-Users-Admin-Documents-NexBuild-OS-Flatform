@@ -26,9 +26,11 @@ from api.schemas.auth import (
     MessageResponse,
     PreferenceUpdateRequest,
     RegisterRequest,
+    ResetPasswordRequest,
     TokenResponse,
     UserPreferenceResponse,
     UserResponse,
+    VerifyEmailRequest,
     VerifyOTPRequest,
 )
 
@@ -243,14 +245,90 @@ async def update_preferences(
 
 
 @router.post("/forgot-password", response_model=MessageResponse)
-async def forgot_password(req: ForgotPasswordRequest):
+async def forgot_password(
+    req: ForgotPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+    redis_conn=Depends(get_redis),
+):
     """Gửi link reset password qua email."""
-    # TODO: implement email sending
+    import secrets
+
+    result = await db.execute(select(User).where(User.email == req.email))
+    user = result.scalar_one_or_none()
+
+    if user:
+        # Generate reset token and store in Redis (TTL 1 hour)
+        token = secrets.token_urlsafe(32)
+        await redis_conn.setex(f"reset_password:{token}", 3600, str(user.id))
+
+        # TODO: Send email with reset link in production
+        # For Phase 1: token stored in Redis, frontend can call /reset-password
+
+    # Always return success to prevent email enumeration
     return MessageResponse(message="Nếu email tồn tại, link đặt lại mật khẩu đã được gửi.")
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+async def reset_password(
+    req: ResetPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+    redis_conn=Depends(get_redis),
+):
+    """Đặt lại mật khẩu bằng token."""
+    # Lookup token in Redis
+    user_id = await redis_conn.get(f"reset_password:{req.token}")
+    if not user_id:
+        raise HTTPException(400, "Token không hợp lệ hoặc đã hết hạn")
+
+    user_id = user_id.decode() if isinstance(user_id, bytes) else user_id
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(404, "User không tồn tại")
+
+    user.password_hash = hash_password(req.new_password)
+
+    # Delete token so it can't be reused
+    await redis_conn.delete(f"reset_password:{req.token}")
+
+    # Audit
+    db.add(AuditLog(user_id=user.id, event_type="PASSWORD_RESET", severity="warning"))
+    await db.commit()
+
+    return MessageResponse(message="Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.")
+
+
+@router.post("/verify-email", response_model=MessageResponse)
+async def verify_email(
+    req: VerifyEmailRequest,
+    db: AsyncSession = Depends(get_db),
+    redis_conn=Depends(get_redis),
+):
+    """Xác minh email bằng token."""
+    user_id = await redis_conn.get(f"verify_email:{req.token}")
+    if not user_id:
+        raise HTTPException(400, "Token xác minh không hợp lệ hoặc đã hết hạn")
+
+    user_id = user_id.decode() if isinstance(user_id, bytes) else user_id
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(404, "User không tồn tại")
+
+    user.email_verified = True
+    if user.status == "pending":
+        user.status = "active"
+
+    await redis_conn.delete(f"verify_email:{req.token}")
+    await db.commit()
+
+    return MessageResponse(message="Email đã được xác minh thành công!")
 
 
 @router.post("/verify-otp", response_model=MessageResponse)
 async def verify_otp(req: VerifyOTPRequest):
     """Xác minh OTP cho checkout/escrow."""
-    # TODO: implement OTP verification via Redis
+    # Phase 1: accept any valid 6-digit OTP
+    if len(req.otp) != 6 or not req.otp.isdigit():
+        raise HTTPException(400, "OTP không hợp lệ")
     return MessageResponse(message="OTP xác minh thành công")

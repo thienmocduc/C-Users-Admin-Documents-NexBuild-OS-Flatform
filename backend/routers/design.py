@@ -148,6 +148,145 @@ async def get_design(
     }
 
 
+@router.get("/{design_id}/scene")
+async def get_scene(
+    design_id: UUID,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Lấy scene 3D data cho Three.js renderer."""
+    result = await db.execute(select(Design).where(Design.id == design_id))
+    design = result.scalar_one_or_none()
+    if not design:
+        raise HTTPException(404, "Thiết kế không tồn tại")
+    if design.user_id != current_user.id:
+        raise HTTPException(403, "Không có quyền xem")
+
+    scene_3d = design.ai_response.get("scene_3d") if design.ai_response else None
+    if not scene_3d:
+        raise HTTPException(404, "Chưa có dữ liệu 3D cho thiết kế này")
+
+    return {
+        "design_id": str(design.id),
+        "scene_3d": scene_3d,
+        "style": design.style,
+        "area_m2": float(design.area_m2) if design.area_m2 else None,
+    }
+
+
+@router.post("/{design_id}/save-3d")
+async def save_scene(
+    design_id: UUID,
+    scene_data: dict,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Lưu scene 3D data từ editor (furniture positions, materials, etc)."""
+    result = await db.execute(select(Design).where(Design.id == design_id))
+    design = result.scalar_one_or_none()
+    if not design:
+        raise HTTPException(404, "Thiết kế không tồn tại")
+    if design.user_id != current_user.id:
+        raise HTTPException(403, "Không có quyền sửa")
+
+    # Update scene_3d in ai_response JSON
+    ai_response = design.ai_response or {}
+    ai_response["scene_3d"] = scene_data
+    design.ai_response = ai_response
+
+    # Flag DB update for JSON column
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(design, "ai_response")
+
+    await db.flush()
+
+    return {"message": "Đã lưu scene 3D", "ok": True}
+
+
+@router.post("/{design_id}/export")
+async def export_design(
+    design_id: UUID,
+    export_type: str = Query("measurements", pattern=r"^(measurements|boq_from_3d)$"),
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Export từ 3D scene: measurements hoặc BOQ tự động."""
+    result = await db.execute(select(Design).where(Design.id == design_id))
+    design = result.scalar_one_or_none()
+    if not design:
+        raise HTTPException(404, "Thiết kế không tồn tại")
+    if design.user_id != current_user.id:
+        raise HTTPException(403, "Không có quyền")
+
+    scene_3d = design.ai_response.get("scene_3d") if design.ai_response else None
+    if not scene_3d:
+        raise HTTPException(404, "Chưa có dữ liệu 3D")
+
+    room = scene_3d.get("room", {})
+    furniture = scene_3d.get("furniture", [])
+
+    if export_type == "measurements":
+        measurements = {
+            "room": {
+                "width": room.get("width", 0),
+                "depth": room.get("depth", 0),
+                "height": room.get("height", 0),
+                "area": round(room.get("width", 0) * room.get("depth", 0), 1),
+                "volume": round(room.get("width", 0) * room.get("depth", 0) * room.get("height", 0), 1),
+            },
+            "furniture": [
+                {
+                    "name": f.get("name", f.get("type", "Unknown")),
+                    "type": f.get("type"),
+                    "dimensions": f.get("dimensions", {}),
+                    "position": f.get("position", {}),
+                }
+                for f in furniture
+            ],
+            "total_items": len(furniture),
+        }
+        return measurements
+
+    elif export_type == "boq_from_3d":
+        # Generate BOQ from 3D scene furniture
+        from backend.services.gemini_service import VN_MATERIALS_DB
+
+        boq_items = []
+        for f in furniture:
+            ftype = f.get("type", "")
+            name = f.get("name", ftype)
+            dims = f.get("dimensions", {})
+            # Estimate price based on type
+            price_map = {
+                "sofa": 15000000, "table": 5000000, "chair": 2000000,
+                "bed": 12000000, "cabinet": 8000000, "desk": 6000000,
+                "shelf": 850000, "lamp": 1200000, "plant": 500000,
+                "rug": 2000000, "tv_stand": 4000000, "wardrobe": 10000000,
+                "nightstand": 2500000, "dining_set": 20000000,
+            }
+            price = price_map.get(ftype, 1000000)
+            boq_items.append({
+                "category": "Nội thất",
+                "name": name,
+                "material": f.get("material", ""),
+                "unit": "cái",
+                "quantity": 1,
+                "unit_price": price,
+                "total_price": price,
+            })
+
+        # Add room materials (floor, walls, ceiling)
+        room_area = room.get("width", 0) * room.get("depth", 0)
+        wall_area = 2 * (room.get("width", 0) + room.get("depth", 0)) * room.get("height", 0)
+        boq_items.extend([
+            {"category": "Sàn", "name": "Sàn gỗ công nghiệp", "material": scene_3d.get("floor", {}).get("material", "wood"), "unit": "m²", "quantity": round(room_area, 1), "unit_price": 285000, "total_price": int(room_area * 285000)},
+            {"category": "Tường", "name": "Sơn tường nội thất", "material": "paint", "unit": "m²", "quantity": round(wall_area, 1), "unit_price": 45000, "total_price": int(wall_area * 45000)},
+        ])
+
+        total = sum(i["total_price"] for i in boq_items)
+        return {"items": boq_items, "total": total}
+
+
 @router.get("/boq/saved")
 async def list_saved_boqs(
     current_user=Depends(get_current_user),

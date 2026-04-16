@@ -54,6 +54,9 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.0-flash"
 
+    # Fal.ai (image generation — server-side only, NEVER expose to client)
+    FAL_API_KEY: str = ""
+
     # Escrow
     ESCROW_AUTO_RELEASE_DAYS: int = 30
     COMMISSION_SUPPLIER_PCT: float = 2.5
