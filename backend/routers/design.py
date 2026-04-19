@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.core.database import get_db
 from api.core.security import get_current_user
-from backend.models.design import BOQItem, Design, DesignRender
-from backend.schemas.design import GenerateRequest, QuotaResponse
-from backend.services.design_service import check_quota, create_design
+from api.models.design import BOQItem, Design, DesignRender
+from api.schemas.design import GenerateRequest, QuotaResponse
+from api.services.design_service import check_quota, create_design
 
 router = APIRouter(prefix="/design", tags=["NexDesign AI"])
 
@@ -249,7 +249,7 @@ async def export_design(
 
     elif export_type == "boq_from_3d":
         # Generate BOQ from 3D scene furniture
-        from backend.services.gemini_service import VN_MATERIALS_DB
+        from api.services.gemini_service import VN_MATERIALS_DB
 
         boq_items = []
         for f in furniture:

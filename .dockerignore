@@ -1,0 +1,64 @@
+# Git
+.git
+.gitignore
+
+# Env (secrets — set via Railway variables instead)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.mypy_cache
+.ruff_cache
+*.egg-info
+
+# Local SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# Frontend (Vercel handles this)
+public
+src
+node_modules
+next.config.mjs
+tailwind.config.ts
+postcss.config.mjs
+tsconfig.json
+package.json
+package-lock.json
+next-env.d.ts
+.next
+
+# Vercel
+.vercel
+.vercelignore
+api/send-verification.js
+api/verify-email.js
+api/package.json
+
+# Docker
+docker-compose.yml
+nginx
+
+# IDE
+.claude
+.vscode
+.idea
+
+# Docs
+docs
+*.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (use S3 instead)
+uploads

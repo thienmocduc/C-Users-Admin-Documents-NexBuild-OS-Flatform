@@ -7,9 +7,9 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.models.user import User
-from backend.models.design import BOQItem, Design, DesignRender
-from backend.services.gemini_service import generate_design
-from backend.services.fal_service import generate_design_images
+from api.models.design import BOQItem, Design, DesignRender
+from api.services.gemini_service import generate_design
+from api.services.fal_service import generate_design_images
 
 
 async def check_quota(user: User, db: AsyncSession) -> dict:

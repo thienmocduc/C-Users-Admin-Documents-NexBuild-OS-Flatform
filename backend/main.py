@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
         import api.models.order  # noqa
         import api.models.finance  # noqa
         import api.models.community  # noqa
-        import backend.models.design  # noqa
+        import api.models.design  # noqa
         await conn.run_sync(Base.metadata.create_all)
     yield
     await engine.dispose()
@@ -84,7 +84,7 @@ from api.routers.orders import cart_router, order_router
 from api.routers.wallet import router as wallet_router
 from api.routers.stats import stats_router, admin_router
 from api.routers.forum import forum_router, review_router, notif_router
-from backend.routers.design import router as design_router
+from api.routers.design import router as design_router
 # Phase 1 — New routers
 from api.routers.chat import router as chat_router
 from api.routers.contracts import router as contracts_router
