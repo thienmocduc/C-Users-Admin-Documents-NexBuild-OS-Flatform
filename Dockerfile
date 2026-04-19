@@ -35,4 +35,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # Start FastAPI — use $PORT from Railway, single worker (Railway scales horizontally)
-CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT} --workers 1
+# --proxy-headers + --forwarded-allow-ips="*" so request.client.host reflects real client IP
+# (needed for rate limiting behind Railway/Vercel proxy chain)
+CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT} --workers 1 --proxy-headers --forwarded-allow-ips="*"

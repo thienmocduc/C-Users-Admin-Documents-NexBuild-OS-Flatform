@@ -83,7 +83,8 @@ async def login(
     _rate=Depends(check_login_rate_limit),
 ):
     """Đăng nhập — trả JWT access + set refresh cookie."""
-    ip = request.client.host if request.client else "unknown"
+    from api.core.security import _client_ip
+    ip = _client_ip(request)
 
     # Find user by email or phone
     result = await db.execute(

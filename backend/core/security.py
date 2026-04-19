@@ -127,9 +127,24 @@ def require_role(*roles: str):
 
 
 # ─── Rate Limiting ────────────────────────────────────────
+def _client_ip(request: Request) -> str:
+    """Extract real client IP behind proxy chain (Railway GCP LB / Vercel / Cloudflare).
+
+    Priority: X-Forwarded-For (first hop) > X-Real-IP > request.client.host.
+    Railway's GCP LB rotates 100.64.0.x internal IPs, so we MUST trust X-Forwarded-For.
+    """
+    xff = request.headers.get("x-forwarded-for")
+    if xff:
+        return xff.split(",")[0].strip()
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+    return request.client.host if request.client else "unknown"
+
+
 async def check_login_rate_limit(request: Request, redis_conn=Depends(get_redis)):
     """Block IP after 5 failed login attempts in 15 minutes."""
-    ip = request.client.host if request.client else "unknown"
+    ip = _client_ip(request)
     key = f"login_attempts:{ip}"
 
     attempts = await redis_conn.get(key)
@@ -155,7 +170,7 @@ async def record_login_attempt(ip: str, success: bool, redis_conn):
 
 async def check_api_rate_limit(request: Request, redis_conn=Depends(get_redis)):
     """100 req/min per IP."""
-    ip = request.client.host if request.client else "unknown"
+    ip = _client_ip(request)
     key = f"api_rate:{ip}"
 
     current = await redis_conn.incr(key)
