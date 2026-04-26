@@ -90,3 +90,30 @@ class QuotaResponse(BaseModel):
     limit: int
     remaining: int
     reset_date: Optional[str] = None
+
+
+# ─── Phase 5 — Iterative Refinement ───────────────────────────
+class RefineRequest(BaseModel):
+    """User feedback to refine an existing design.
+
+    Example:
+        parent_design_id: "uuid"
+        parent_variant_idx: 0  # which variant the user picked
+        feedback: "Thêm vài chậu cây xanh bên cửa sổ, đổi đèn chùm sang đèn vàng ấm hơn"
+    """
+    parent_variant_idx: int = Field(0, ge=0, le=10)
+    feedback: str = Field(..., min_length=5, max_length=2000)
+
+
+class RefineResponse(BaseModel):
+    design_id: str
+    parent_design_id: str
+    round: int
+    feedback_history: list[str]
+    discipline: str
+    status: str
+    variants: list[dict] = []
+    boq_items: list[dict] = []
+    boq_total: int = 0
+    agent_output: Optional[dict] = None
+    message: str = ""

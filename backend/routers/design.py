@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.core.database import get_db
 from api.core.security import get_current_user
 from api.models.design import BOQItem, Design, DesignRender
-from api.schemas.design import GenerateRequest, QuotaResponse
-from api.services.design_service import check_quota, create_design
+from api.schemas.design import GenerateRequest, QuotaResponse, RefineRequest
+from api.services.design_service import check_quota, create_design, refine_design
 
 router = APIRouter(prefix="/design", tags=["NexDesign AI"])
 
@@ -48,6 +48,43 @@ async def generate(
             detail=result["message"],
         )
 
+    return result
+
+
+# ─── Phase 5 — Iterative Refinement ────────────────────────────
+@router.post("/{design_id}/refine")
+async def refine(
+    design_id: str,
+    req: RefineRequest,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Refine an existing design with user feedback (Phase 5 iterative).
+
+    User picks a variant + describes what to change → AI applies ONLY that
+    change while preserving everything else. Saves as new Design row with
+    parent reference for history.
+    """
+    result = await refine_design(
+        user=current_user,
+        parent_design_id=design_id,
+        parent_variant_idx=req.parent_variant_idx,
+        feedback=req.feedback,
+        db=db,
+    )
+    if result.get("error"):
+        msg = result.get("message", "")
+        if "hết lượt" in msg:
+            code = 429
+        elif "không tìm thấy" in msg.lower() or "không hợp lệ" in msg.lower():
+            code = 404
+        elif "không có quyền" in msg.lower():
+            code = 403
+        elif "giới hạn 10 lần" in msg.lower():
+            code = 422
+        else:
+            code = 500
+        raise HTTPException(status_code=code, detail=msg)
     return result
 
 

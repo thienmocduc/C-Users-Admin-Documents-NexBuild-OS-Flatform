@@ -192,6 +192,7 @@
           <button class="cv-btn" onclick="showGrid()">⊞ Lưới 4</button>
           <button class="cv-btn active" id="btn-single" onclick="showSingle(0)">⛶ Toàn màn hình</button>
           <button class="cv-btn" onclick="startGenerate()">🔄 Tạo lại</button>
+          <button class="cv-btn" id="refineBtn" onclick="openRefine(window.currentSingleIdx||0,VARIANT_LABELS[window.currentSingleIdx||0]||'Variant')" style="display:none;background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(99,102,241,.15));border-color:rgba(168,85,247,.4);color:var(--vio,#A855F7);font-weight:700">🔁 Refine</button>
           <button class="cv-btn" onclick="toast('Tải xuống tất cả render')">⬇️ Tải xuống</button>
           <button class="cv-btn" id="shopBtn" onclick="toggleShoppable()" style="display:none">🛍️ Shoppable</button>
         </div>
@@ -499,6 +500,39 @@
 </div><!-- end main -->
 </div><!-- end app -->
 
+<!-- ═══ REFINE MODAL (Phase 5 — Iterative Refinement) ═══ -->
+<div id="refineModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);align-items:center;justify-content:center">
+  <div style="width:520px;max-width:94vw;background:var(--bg2);border:1px solid var(--bdr2);border-radius:18px;padding:24px;position:relative">
+    <button onclick="closeRefine()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer">&times;</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="font-size:24px">🔁</div>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)">Refine — Round <span id="refineRound">2</span></div>
+        <div style="font-size:11px;color:var(--text2)">Mô tả những gì bạn muốn thay đổi (giữ nguyên phần còn lại)</div>
+      </div>
+    </div>
+    <div id="refineHistoryBox" style="display:none;background:var(--bg3);border-radius:10px;padding:10px;margin-bottom:12px;font-size:11px;color:var(--text2);max-height:140px;overflow-y:auto">
+      <div style="font-weight:700;margin-bottom:6px;color:var(--c1)">📜 Lịch sử feedback</div>
+      <div id="refineHistoryList"></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:4px">Variant đang refine: <b id="refineVariantLbl" style="color:var(--c1)">A — Modern</b></label>
+    </div>
+    <textarea id="refineFeedback" placeholder="VD: Thêm vài chậu cây Monstera bên cửa sổ, đổi sofa sang da nâu, ánh sáng vàng ấm hơn..." rows="5" style="width:100%;padding:12px;background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;color:var(--text);font-family:'Noto Sans',sans-serif;font-size:13px;resize:vertical;outline:none"></textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button class="rt" onclick="addRefineHint('Thêm cây xanh, plant decor')">🌿 + Cây xanh</button>
+      <button class="rt" onclick="addRefineHint('Đổi tông màu ấm hơn (warm)')">🔥 Tông ấm</button>
+      <button class="rt" onclick="addRefineHint('Đổi sang gỗ óc chó walnut')">🪵 Gỗ walnut</button>
+      <button class="rt" onclick="addRefineHint('Tăng ánh sáng tự nhiên, mở cửa lớn')">☀️ Sáng hơn</button>
+      <button class="rt" onclick="addRefineHint('Phong cách tối giản hơn, bớt decor')">✨ Tối giản</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <button onclick="closeRefine()" style="flex:1;padding:11px;background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;color:var(--text2);font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif">Hủy</button>
+      <button id="refineSubmitBtn" onclick="submitRefine()" style="flex:2;padding:11px;background:var(--grad);border:none;border-radius:10px;color:#fff;font-weight:700;cursor:pointer;font-family:'Noto Sans',sans-serif">🚀 Áp dụng feedback</button>
+    </div>
+  </div>
+</div>
+
 <!-- AUTH MODAL -->
 <div id="authModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);align-items:center;justify-content:center">
 <div style="width:420px;max-width:92vw;background:var(--bg2);border:1px solid var(--bdr2);border-radius:18px;padding:32px;position:relative">
@@ -627,12 +661,15 @@ function showGrid(){
   document.getElementById('renderGrid').style.display='block';
   document.getElementById('singleRender').classList.remove('on');
   document.getElementById('shopBtn').style.display='none';
+document.getElementById('refineBtn').style.display=currentDesignId?'flex':'none';
 }
 function showSingle(idx){
+  window.currentSingleIdx=idx;
   document.getElementById('renderGrid').style.display='none';
   document.getElementById('singleRender').classList.add('on');
   document.getElementById('srInfo').textContent=RENDER_INFO[idx]||RENDER_INFO[0];
   document.getElementById('shopBtn').style.display='flex';
+if(currentDesignId)document.getElementById('refineBtn').style.display='flex';
   // Show real image in single view
   if(generatedImages&&generatedImages[idx]){
     const art=document.getElementById('renderArtA');
@@ -692,6 +729,80 @@ const VARIANT_LABELS=['A — Hiện đại','B — Scandinavian','C — Japandi'
 let generatedImages=[];
 let lastDesignResult=null; // Store full result with scene_3d for 3D editor
 let currentDiscipline='interior'; // 'interior' | 'architecture' | 'structural'
+let currentDesignId=null;          // ID of latest design (for refine)
+let currentRefineRound=1;          // round counter
+let refineFeedbackHistory=[];      // history of feedback strings
+let refineTargetVariantIdx=0;      // which variant user picked to refine
+
+// ── PHASE 5: REFINE MODAL ──
+function openRefine(variantIdx, variantLabel){
+  if(!currentDesignId){ toast('Hãy tạo thiết kế trước!','error'); return; }
+  refineTargetVariantIdx=variantIdx;
+  document.getElementById('refineRound').textContent=(currentRefineRound+1);
+  document.getElementById('refineVariantLbl').textContent=variantLabel||('Variant '+variantIdx);
+  document.getElementById('refineFeedback').value='';
+  // History
+  if(refineFeedbackHistory.length>0){
+    document.getElementById('refineHistoryBox').style.display='block';
+    document.getElementById('refineHistoryList').innerHTML=
+      refineFeedbackHistory.map((f,i)=>'<div style="padding:4px 0;border-bottom:1px solid var(--bdr)">v'+(i+2)+': '+f.substring(0,140)+'</div>').join('');
+  } else {
+    document.getElementById('refineHistoryBox').style.display='none';
+  }
+  document.getElementById('refineModal').style.display='flex';
+}
+function closeRefine(){ document.getElementById('refineModal').style.display='none'; }
+function addRefineHint(text){
+  const ta=document.getElementById('refineFeedback');
+  ta.value=(ta.value?ta.value.trim()+'. ':'')+text;
+  ta.focus();
+}
+function submitRefine(){
+  const fb=document.getElementById('refineFeedback').value.trim();
+  if(fb.length<5){ toast('Vui lòng mô tả thay đổi (≥5 ký tự)','error'); return; }
+  if(!currentDesignId){ toast('Không tìm thấy design gốc','error'); return; }
+  const btn=document.getElementById('refineSubmitBtn');
+  btn.disabled=true; btn.textContent='⏳ AI đang refine...';
+  // Show loading on canvas
+  document.getElementById('cvResult').classList.remove('on');
+  document.getElementById('cvLoading').classList.add('on');
+  document.getElementById('ldTitle').textContent='Refine theo feedback của bạn';
+  document.getElementById('ldSub').textContent='AI đang adjust design (giữ nguyên phần còn lại)';
+  document.getElementById('ldFill').style.width='0%';
+  let pct=0;
+  const fillT=setInterval(()=>{pct=Math.min(pct+1.2,93);document.getElementById('ldFill').style.width=pct+'%';document.getElementById('ldPct').textContent=Math.round(pct)+'%';},120);
+  apiFetch('/design/'+currentDesignId+'/refine',{
+    method:'POST',
+    body:JSON.stringify({parent_variant_idx:refineTargetVariantIdx,feedback:fb})
+  }).then(result=>{
+    clearInterval(fillT);
+    btn.disabled=false; btn.textContent='🚀 Áp dụng feedback';
+    closeRefine();
+    if(result && !result.error){
+      // Update state for next refine
+      currentDesignId=result.design_id;
+      currentRefineRound=result.round||(currentRefineRound+1);
+      refineFeedbackHistory=result.feedback_history||refineFeedbackHistory.concat([fb]);
+      lastDesignResult=result;
+      generatedImages=(result.variants||[]).map(v=>v.image_url||null);
+      toast('✓ Refine round '+currentRefineRound+' xong','success');
+      // Re-render based on discipline
+      if(result.discipline==='architecture'){ showArchitectureResult(result); }
+      else if(result.discipline==='structural'){ showStructuralResult(result); }
+      else { showResult(result); }
+    } else {
+      toast(result?.detail||result?.message||'Refine thất bại','error');
+      document.getElementById('cvLoading').classList.remove('on');
+      document.getElementById('cvResult').classList.add('on');
+    }
+  }).catch(()=>{
+    clearInterval(fillT);
+    btn.disabled=false; btn.textContent='🚀 Áp dụng feedback';
+    toast('Lỗi kết nối server','error');
+    document.getElementById('cvLoading').classList.remove('on');
+    document.getElementById('cvResult').classList.add('on');
+  });
+}
 
 // ── DISCIPLINE TABS ──
 function selDiscipline(el){
@@ -780,6 +891,10 @@ function startGenerate(){
     clearInterval(ldTimer);clearInterval(fillTimer);
     if(result && !result.error){
       lastDesignResult=result;
+      // Reset refine state for new design
+      currentDesignId=result.design_id||null;
+      currentRefineRound=1;
+      refineFeedbackHistory=[];
       const variants=result.variants||[];
       generatedImages=variants.map(v=>v.image_url||null);
       // Dispatch to right renderer
@@ -813,6 +928,7 @@ function showArchitectureResult(result){
     document.getElementById('cvResult').classList.add('on');
     document.getElementById('cv-title').textContent='Phương án kiến trúc · '+(result.agent_output?.site_analysis?.city||'')+ ' · TCVN compliant';
     document.getElementById('shopBtn').style.display='none';
+document.getElementById('refineBtn').style.display=currentDesignId?'flex':'none';
 
     const ao=result.agent_output||{};
     const concepts=ao.concept_variants||[];
@@ -872,6 +988,7 @@ function showStructuralResult(result){
     document.getElementById('cvResult').classList.add('on');
     document.getElementById('cv-title').textContent='Phương án kết cấu BTCT · TCVN 5574/2737 compliant';
     document.getElementById('shopBtn').style.display='none';
+document.getElementById('refineBtn').style.display=currentDesignId?'flex':'none';
 
     const ao=result.agent_output||{};
     const sys=ao.structural_system||{};
@@ -948,6 +1065,7 @@ function showResult(){
     document.getElementById('cvResult').classList.add('on');
     document.getElementById('cv-title').textContent='4 phương án thiết kế · BOQ tự động';
     document.getElementById('shopBtn').style.display='flex';
+if(currentDesignId)document.getElementById('refineBtn').style.display='flex';
     // Replace CSS art with real Fal.ai images
     if(generatedImages&&generatedImages.length>0){
       const frames=document.querySelectorAll('.r4grid .rcard .rframe');
@@ -956,7 +1074,7 @@ function showResult(){
         const imgUrl=generatedImages[i];
         if(imgUrl){
           f.style.background='none';
-          f.innerHTML='<img src="'+imgUrl+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0" alt="'+labels[i]+'"><div class="rf-label">'+labels[i]+'</div><div class="rf-opts"><div class="rf-opt" onclick="event.stopPropagation();window.open(\''+imgUrl+'\')">⛶</div><div class="rf-opt" onclick="event.stopPropagation();downloadImg(\''+imgUrl+'\',\'nexdesign-'+i+'.png\')">⬇</div></div>'+(i===0?'<div class="rf-sel">✓ Đã chọn</div>':'');
+          f.innerHTML='<img src="'+imgUrl+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0" alt="'+labels[i]+'"><div class="rf-label">'+labels[i]+'</div><div class="rf-opts"><div class="rf-opt" title="Phóng to" onclick="event.stopPropagation();window.open(\''+imgUrl+'\')">⛶</div><div class="rf-opt" title="Tải xuống" onclick="event.stopPropagation();downloadImg(\''+imgUrl+'\',\'nexdesign-'+i+'.png\')">⬇</div><div class="rf-opt" title="Refine variant này" onclick="event.stopPropagation();openRefine('+i+',\''+(labels[i]||'').replace(/[\\\x27]/g,"")+'\')">🔁</div></div>'+(i===0?'<div class="rf-sel">✓ Đã chọn</div>':'');
         }
       });
       // Update single view canvas

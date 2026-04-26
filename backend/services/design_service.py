@@ -1,6 +1,7 @@
-"""Design service — quota management + multi-discipline agent dispatcher."""
+"""Design service — quota management + multi-discipline agent dispatcher + refine."""
 from datetime import datetime, timezone
 from typing import Any, Optional
+from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -255,4 +256,155 @@ def _finalize_structural(design: Design, ai_result: dict) -> dict:
         "boq_total": ai_result.get("boq_total_vnd", 0),
         "agent_output": ai_result,
         "message": "Phương án kết cấu sơ bộ đã sẵn sàng!",
+    }
+
+
+# ─────────────────────────────────────────────────────────────
+# PHASE 5 — Iterative Refinement
+# ─────────────────────────────────────────────────────────────
+async def refine_design(
+    user: User,
+    parent_design_id: str,
+    parent_variant_idx: int,
+    feedback: str,
+    db: AsyncSession,
+) -> dict:
+    """Refine an existing design based on user feedback.
+
+    Loads parent context → calls agent.refine() → saves new Design row
+    with refinement metadata in ai_response.
+    """
+    # Validate UUID
+    try:
+        pid = UUID(parent_design_id)
+    except (ValueError, TypeError):
+        return {"error": True, "message": "parent_design_id không hợp lệ"}
+
+    # Load parent design
+    result = await db.execute(select(Design).where(Design.id == pid))
+    parent: Design | None = result.scalar_one_or_none()
+    if not parent:
+        return {"error": True, "message": "Không tìm thấy design gốc"}
+    if parent.user_id != user.id:
+        return {"error": True, "message": "Bạn không có quyền refine design này"}
+    if not parent.ai_response:
+        return {"error": True, "message": "Design gốc chưa có nội dung AI để refine"}
+
+    parent_output = parent.ai_response
+    parent_refinement = parent_output.get("refinement", {}) or {}
+    round_num = int(parent_refinement.get("round", 1)) + 1
+
+    # Cap rounds to 10 (prevent abuse)
+    if round_num > 10:
+        return {"error": True, "message": "Đã đạt giới hạn 10 lần refine cho design này"}
+
+    # Quota check (refine consumes quota too)
+    quota = await check_quota(user, db)
+    if quota["plan"] == "free" and quota["remaining"] <= 0:
+        return {
+            "error": True,
+            "message": "Bạn đã hết lượt render miễn phí tháng này. Nâng cấp Pro để không giới hạn!",
+            "quota": quota,
+        }
+
+    # Determine discipline from parent
+    discipline = parent_output.get("discipline", "interior")
+    agent = _select_agent(discipline)
+
+    # Build agent request from parent metadata
+    agent_request = _AgentRequest(
+        prompt=parent.prompt or "",
+        style=parent.style or "modern",
+        room_type=parent.room_type,
+        area_m2=float(parent.area_m2) if parent.area_m2 else None,
+        budget_million=float(parent.budget_million) if parent.budget_million else None,
+        auto_boq=True,
+        discipline=discipline,
+        location_province=parent_output.get("site_analysis", {}).get("city"),
+        floors=None,
+        soil_type=None,
+    )
+
+    # Call agent.refine()
+    try:
+        refined = await agent.refine(
+            parent_output=parent_output,
+            parent_variant_idx=parent_variant_idx,
+            feedback=feedback,
+            round_num=round_num,
+            request=agent_request,
+        )
+    except Exception as e:
+        return {"error": True, "message": f"Refine failed: {e}"}
+
+    # Inject refinement metadata
+    feedback_history = list(parent_refinement.get("feedback_history", []))
+    feedback_history.append(feedback)
+    refined["refinement"] = {
+        "is_refinement": True,
+        "parent_design_id": str(parent.id),
+        "parent_variant_idx": parent_variant_idx,
+        "round": round_num,
+        "feedback": feedback,
+        "feedback_history": feedback_history,
+    }
+
+    # Persist as a new Design row (preserves history)
+    new_design = Design(
+        user_id=user.id,
+        prompt=f"[v{round_num}] {parent.prompt}",
+        style=parent.style,
+        room_type=parent.room_type,
+        area_m2=parent.area_m2,
+        budget_million=parent.budget_million,
+        status="done",
+        ai_response=refined,
+        completed_at=datetime.now(timezone.utc),
+    )
+    db.add(new_design)
+    await db.flush()
+
+    # Save renders + BOQ for interior (legacy frontend compat)
+    if discipline == "interior":
+        for i, v in enumerate(refined.get("variants", [])):
+            render = DesignRender(
+                design_id=new_design.id,
+                variant_idx=v.get("variant_idx", i),
+                style_label=v.get("style_label", f"Variant {i+1}"),
+                description=v.get("description", ""),
+                image_url=v.get("image_url"),
+                thumbnail_url=v.get("image_url"),
+            )
+            db.add(render)
+        for item in refined.get("boq_items", []):
+            try:
+                qty = float(item.get("quantity", 0) or 0)
+                up = int(item.get("unit_price", 0) or 0)
+                tp = int(item.get("total_price") or qty * up)
+                db.add(BOQItem(
+                    design_id=new_design.id,
+                    category=str(item.get("category", "Khác"))[:100],
+                    material=str(item.get("material", ""))[:100],
+                    product_name=str(item.get("product_name", ""))[:255],
+                    unit=str(item.get("unit", "cái"))[:32],
+                    quantity=qty,
+                    unit_price=up,
+                    total_price=tp,
+                ))
+            except (ValueError, TypeError):
+                continue
+    await db.flush()
+
+    return {
+        "design_id": str(new_design.id),
+        "parent_design_id": str(parent.id),
+        "round": round_num,
+        "feedback_history": feedback_history,
+        "discipline": discipline,
+        "status": "done",
+        "variants": refined.get("variants") or refined.get("concept_variants", []),
+        "boq_items": refined.get("boq_items", []),
+        "boq_total": refined.get("boq_total") or refined.get("boq_total_vnd", 0),
+        "agent_output": refined,
+        "message": f"Refine round {round_num} đã sẵn sàng!",
     }
