@@ -1,26 +1,25 @@
-"""BaseAgent — shared Gemini client + JSON parsing + retry logic.
+"""BaseAgent — calls ZeniCloud /ai/complete (gateway to 6 LLMs).
 
-All discipline agents (Interior, Architecture, Structural) inherit from this
-class and override `discipline`, `system_prompt`, `build_user_prompt()`, and
-`enrich_response()`.
+All discipline agents (Interior, Architecture, Structural) inherit from this.
+Subclasses override `discipline`, `system_prompt`, `build_user_prompt()`,
+`fallback_response()`, and optionally `enrich_response()`.
+
+Migrated from direct Gemini API → ZeniCloud unified gateway 2026-04-27.
 """
 from __future__ import annotations
 
-import json
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
-import httpx
+from api.services import zenicloud_service as zc
 
 logger = logging.getLogger(__name__)
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
-GEMINI_URL = (
-    f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-)
-GEMINI_TIMEOUT = float(os.getenv("GEMINI_TIMEOUT", "60"))
+# Default model for agents — Gemini Flash via ZeniCloud (best $/quality)
+AGENT_MODEL = os.getenv("AGENT_MODEL", "gemini-2.5-flash")
+# Fallback to legacy Gemini direct when ZENI_TOKEN missing (dev only)
+LEGACY_GEMINI_KEY = os.getenv("GEMINI_API_KEY", "")
 
 
 class BaseAgent:
@@ -30,6 +29,7 @@ class BaseAgent:
     system_prompt: str = ""
     temperature: float = 0.8
     max_output_tokens: int = 8192
+    model: str = AGENT_MODEL
 
     # ────────────────────────────────────────────────────────────
     # Public API — subclasses override the 3 hooks below
@@ -39,57 +39,56 @@ class BaseAgent:
         raise NotImplementedError
 
     def fallback_response(self, request: Any) -> dict:
-        """Return demo data when Gemini API key is missing or fails."""
+        """Return demo data when ZeniCloud unavailable or fails."""
         raise NotImplementedError
 
     def enrich_response(self, raw: dict, request: Any) -> dict:
-        """Post-process Gemini output (validate prices, add KB references)."""
+        """Post-process LLM output (validate prices, add KB references)."""
         return raw
 
     # ────────────────────────────────────────────────────────────
     # Main entrypoint
     # ────────────────────────────────────────────────────────────
     async def generate(self, request: Any) -> dict:
-        """Call Gemini → parse JSON → enrich → return."""
-        if not GEMINI_API_KEY:
-            logger.warning("[%s] GEMINI_API_KEY missing — using fallback", self.discipline)
+        """Call ZeniCloud /ai/complete → parse JSON → enrich → return."""
+        if not zc.is_configured():
+            logger.warning("[%s] ZENI_TOKEN missing — using fallback", self.discipline)
             return self.fallback_response(request)
 
         user_prompt = self.build_user_prompt(request)
-        full_prompt = self.system_prompt + "\n\n---\n\n" + user_prompt
 
-        try:
-            async with httpx.AsyncClient(timeout=GEMINI_TIMEOUT) as client:
-                resp = await client.post(
-                    GEMINI_URL,
-                    params={"key": GEMINI_API_KEY},
-                    json={
-                        "contents": [
-                            {"role": "user", "parts": [{"text": full_prompt}]}
-                        ],
-                        "generationConfig": {
-                            "temperature": self.temperature,
-                            "topP": 0.95,
-                            "maxOutputTokens": self.max_output_tokens,
-                            "responseMimeType": "application/json",
-                        },
-                    },
-                )
+        result = await zc.complete(
+            prompt=user_prompt,
+            system=self.system_prompt,
+            model=self.model,
+            temperature=self.temperature,
+            max_tokens=self.max_output_tokens,
+            json_mode=True,
+        )
 
-                if resp.status_code != 200:
-                    logger.error(
-                        "[%s] Gemini HTTP %d: %s",
-                        self.discipline, resp.status_code, resp.text[:300]
-                    )
-                    return self.fallback_response(request)
-
-                data = resp.json()
-                text = data["candidates"][0]["content"]["parts"][0]["text"]
-                raw = json.loads(text)
-                return self.enrich_response(raw, request)
-        except (httpx.HTTPError, KeyError, json.JSONDecodeError) as e:
-            logger.exception("[%s] generate failed: %s", self.discipline, e)
+        if result.get("error"):
+            logger.error(
+                "[%s] generate failed (HTTP %s): %s",
+                self.discipline, result.get("status"), result.get("message", "")[:200],
+            )
             return self.fallback_response(request)
+
+        raw = zc.parse_json_response(result.get("output", ""))
+        if not raw:
+            logger.error("[%s] LLM returned non-JSON: %s", self.discipline, result.get("output", "")[:200])
+            return self.fallback_response(request)
+
+        # Track tokens used for billing/observability
+        raw["_meta"] = {
+            "model": result.get("model"),
+            "input_tokens": result.get("input_tokens", 0),
+            "output_tokens": result.get("output_tokens", 0),
+            "cost_usd": result.get("cost_usd", 0),
+            "latency_ms": result.get("latency_ms", 0),
+            "provider": "zenicloud",
+        }
+
+        return self.enrich_response(raw, request)
 
     # ────────────────────────────────────────────────────────────
     # Iterative refinement — Phase 5
@@ -102,7 +101,6 @@ class BaseAgent:
 
         Subclasses can override for discipline-specific framing.
         """
-        # Extract relevant variant context (compact, ≤ 1500 chars)
         variants = parent_output.get("variants") or parent_output.get("concept_variants") or []
         target_variant = (
             variants[parent_variant_idx]
@@ -145,7 +143,6 @@ YÊU CẦU REFINE:
 Trả về JSON hợp lệ."""
 
     def _summarize_boq(self, parent: dict, max_items: int = 10) -> str:
-        """Compact BOQ summary for refine prompt."""
         items = parent.get("boq_items") or parent.get("boq_structural") or []
         if not items:
             return "(trống)"
@@ -161,7 +158,6 @@ Trả về JSON hợp lệ."""
         return "\n".join(lines)
 
     def _summarize_scene(self, parent: dict, max_items: int = 5) -> str:
-        """Compact scene_3d summary."""
         s = parent.get("scene_3d") or {}
         room = s.get("room", {})
         furniture = s.get("furniture", []) or []
@@ -184,13 +180,9 @@ Trả về JSON hợp lệ."""
         round_num: int,
         request: Any,
     ) -> dict:
-        """Refine an existing design based on user feedback.
-
-        Same pipeline as generate() but with refine prompt + parent context.
-        """
-        if not GEMINI_API_KEY:
-            logger.warning("[%s] refine fallback (no API key)", self.discipline)
-            # Mark fallback so frontend shows demo banner
+        """Refine an existing design based on user feedback via ZeniCloud."""
+        if not zc.is_configured():
+            logger.warning("[%s] refine fallback (ZENI_TOKEN missing)", self.discipline)
             fallback = self.fallback_response(request)
             fallback["refinement_demo"] = True
             return fallback
@@ -198,35 +190,36 @@ Trả về JSON hợp lệ."""
         refine_prompt = self.build_refine_prompt(
             parent_output, parent_variant_idx, feedback, round_num
         )
-        full_prompt = self.system_prompt + "\n\n---\n\n" + refine_prompt
 
-        try:
-            async with httpx.AsyncClient(timeout=GEMINI_TIMEOUT) as client:
-                resp = await client.post(
-                    GEMINI_URL,
-                    params={"key": GEMINI_API_KEY},
-                    json={
-                        "contents": [
-                            {"role": "user", "parts": [{"text": full_prompt}]}
-                        ],
-                        "generationConfig": {
-                            "temperature": 0.6,  # Lower temp for refinement = more controlled
-                            "topP": 0.9,
-                            "maxOutputTokens": self.max_output_tokens,
-                            "responseMimeType": "application/json",
-                        },
-                    },
-                )
-                if resp.status_code != 200:
-                    logger.error("[%s] refine HTTP %d: %s", self.discipline, resp.status_code, resp.text[:300])
-                    return self.fallback_response(request)
-                data = resp.json()
-                text = data["candidates"][0]["content"]["parts"][0]["text"]
-                raw = json.loads(text)
-                return self.enrich_response(raw, request)
-        except (httpx.HTTPError, KeyError, json.JSONDecodeError) as e:
-            logger.exception("[%s] refine failed: %s", self.discipline, e)
+        result = await zc.complete(
+            prompt=refine_prompt,
+            system=self.system_prompt,
+            model=self.model,
+            temperature=0.6,  # lower temp for refinement = more controlled
+            max_tokens=self.max_output_tokens,
+            json_mode=True,
+        )
+
+        if result.get("error"):
+            logger.error("[%s] refine failed: %s", self.discipline, result.get("message", "")[:200])
             return self.fallback_response(request)
+
+        raw = zc.parse_json_response(result.get("output", ""))
+        if not raw:
+            logger.error("[%s] refine returned non-JSON", self.discipline)
+            return self.fallback_response(request)
+
+        raw["_meta"] = {
+            "model": result.get("model"),
+            "input_tokens": result.get("input_tokens", 0),
+            "output_tokens": result.get("output_tokens", 0),
+            "cost_usd": result.get("cost_usd", 0),
+            "latency_ms": result.get("latency_ms", 0),
+            "provider": "zenicloud",
+            "refine_round": round_num,
+        }
+
+        return self.enrich_response(raw, request)
 
     # ────────────────────────────────────────────────────────────
     # Helper utilities for subclasses
@@ -242,7 +235,6 @@ Trả về JSON hợp lệ."""
 
     @staticmethod
     def safe_str(value: Any, default: str = "") -> str:
-        """Coerce to non-empty string."""
         s = str(value).strip() if value is not None else ""
         return s if s else default
 
