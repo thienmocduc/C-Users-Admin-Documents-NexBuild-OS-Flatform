@@ -28,6 +28,12 @@ class GenerateRequest(BaseModel):
         None, description="Soil description for foundation design (structural)"
     )
 
+    # Phase 3 — Multi-stage pipeline toggle (slower but higher quality)
+    high_quality: bool = Field(
+        False,
+        description="Run PLAN→SKETCH→RENDER→SELECT pipeline (3-5x slower, ~$0.05/run)",
+    )
+
 
 class DesignVariant(BaseModel):
     variant_idx: int
@@ -117,3 +123,24 @@ class RefineResponse(BaseModel):
     boq_total: int = 0
     agent_output: Optional[dict] = None
     message: str = ""
+
+
+# ─── Phase 4 — Reference-Guided ───────────────────────────────
+class AnalyzeReferenceRequest(BaseModel):
+    """Analyze a reference image to extract design DNA → enriches user's prompt.
+
+    Provide either image_url (public) or image_data_uri (uploaded base64).
+    """
+    image_url: Optional[str] = Field(None, max_length=2000)
+    image_data_uri: Optional[str] = Field(None, max_length=10_000_000)  # ~7MB base64
+    user_prompt: str = Field("", max_length=500, description="Optional extra context")
+
+
+class AnalyzeReferenceResponse(BaseModel):
+    style_analysis: str            # 5-line description in Vietnamese
+    detected_palette: list[str]    # 3-5 hex colors
+    detected_materials: list[str]  # eg ["gỗ óc chó", "đá travertine"]
+    detected_style: str            # eg "indochine" / "japandi"
+    enhanced_prompt: str           # ready-to-use prompt for /design/generate
+    cost_usd: float = 0
+    latency_ms: int = 0

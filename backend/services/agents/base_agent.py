@@ -12,7 +12,7 @@ import logging
 import os
 from typing import Any
 
-from api.services import zenicloud_service as zc
+from api.services import rag_service, zenicloud_service as zc
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 AGENT_MODEL = os.getenv("AGENT_MODEL", "gemini-2.5-flash")
 # Fallback to legacy Gemini direct when ZENI_TOKEN missing (dev only)
 LEGACY_GEMINI_KEY = os.getenv("GEMINI_API_KEY", "")
+# Phase 2 — RAG toggle (default on)
+RAG_ENABLED = os.getenv("RAG_ENABLED", "1") == "1"
+RAG_TOP_K = int(os.getenv("RAG_TOP_K", "5"))
 
 
 class BaseAgent:
@@ -50,12 +53,38 @@ class BaseAgent:
     # Main entrypoint
     # ────────────────────────────────────────────────────────────
     async def generate(self, request: Any) -> dict:
-        """Call ZeniCloud /ai/complete → parse JSON → enrich → return."""
+        """Call ZeniCloud /ai/complete → parse JSON → enrich → return.
+
+        Phase 2: prepends RAG-retrieved KB context to user_prompt for richer output.
+        """
         if not zc.is_configured():
             logger.warning("[%s] ZENI_TOKEN missing — using fallback", self.discipline)
             return self.fallback_response(request)
 
         user_prompt = self.build_user_prompt(request)
+
+        # ── Phase 2 — RAG: retrieve relevant KB docs and inject ────
+        rag_block = ""
+        rag_docs: list[dict[str, Any]] = []
+        if RAG_ENABLED:
+            try:
+                # Build query from user input fields
+                query_parts = [
+                    getattr(request, "prompt", "") or "",
+                    getattr(request, "style", "") or "",
+                    getattr(request, "room_type", "") or "",
+                ]
+                rag_query = " ".join(p for p in query_parts if p)[:500]
+                if rag_query:
+                    rag_docs = await rag_service.retrieve_relevant_kb(
+                        rag_query, discipline=self.discipline, top_k=RAG_TOP_K,
+                    )
+                    rag_block = rag_service.format_rag_context(rag_docs)
+            except Exception as e:
+                logger.warning("[%s] RAG retrieval failed (non-fatal): %s", self.discipline, e)
+
+        if rag_block:
+            user_prompt = f"{rag_block}\n\n────────\n\n{user_prompt}"
 
         result = await zc.complete(
             prompt=user_prompt,
@@ -86,6 +115,8 @@ class BaseAgent:
             "cost_usd": result.get("cost_usd", 0),
             "latency_ms": result.get("latency_ms", 0),
             "provider": "zenicloud",
+            "rag_docs_used": len(rag_docs),
+            "rag_doc_ids": [d["id"] for d in rag_docs],
         }
 
         return self.enrich_response(raw, request)

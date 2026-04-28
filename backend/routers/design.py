@@ -1,16 +1,24 @@
-"""NexDesign AI router — generate designs, BOQ, quota, history."""
-from typing import Optional
+"""NexDesign AI router — generate designs, BOQ, quota, history, exports."""
+from typing import Literal, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.core.database import get_db
 from api.core.security import get_current_user
 from api.models.design import BOQItem, Design, DesignRender
-from api.schemas.design import GenerateRequest, QuotaResponse, RefineRequest
+from api.schemas.design import (
+    AnalyzeReferenceRequest,
+    AnalyzeReferenceResponse,
+    GenerateRequest,
+    QuotaResponse,
+    RefineRequest,
+)
 from api.services.design_service import check_quota, create_design, refine_design
+from api.services.reference_service import analyze_reference_image
 
 router = APIRouter(prefix="/design", tags=["NexDesign AI"])
 
@@ -40,6 +48,8 @@ async def generate(
         location_province=req.location_province,
         floors=req.floors,
         soil_type=req.soil_type,
+        # Phase 3 — Multi-stage pipeline toggle
+        high_quality=req.high_quality,
     )
 
     if result.get("error"):
@@ -48,6 +58,28 @@ async def generate(
             detail=result["message"],
         )
 
+    return result
+
+
+# ─── Phase 4 — Reference-Guided Generation ─────────────────────
+@router.post("/analyze-reference", response_model=AnalyzeReferenceResponse)
+async def analyze_reference(
+    req: AnalyzeReferenceRequest,
+    current_user=Depends(get_current_user),
+):
+    """Phân tích ảnh tham khảo → trả về enhanced_prompt sẵn sàng feed vào /generate.
+
+    User upload ảnh nội thất đẹp → ZeniCloud Gemini multi-modal phân tích
+    style + palette + materials → user click "Apply" → prompt tự fill.
+    """
+    if not req.image_url and not req.image_data_uri:
+        raise HTTPException(400, "Cần image_url hoặc image_data_uri")
+
+    result = await analyze_reference_image(
+        image_url=req.image_url,
+        image_data_uri=req.image_data_uri,
+        user_prompt=req.user_prompt or "",
+    )
     return result
 
 
@@ -358,3 +390,122 @@ async def list_saved_boqs(
             })
 
     return {"items": boqs}
+
+
+# ─── Phase 6 — Multi-format Deliverables ──────────────────────
+@router.get("/{design_id}/download")
+async def download_deliverable(
+    design_id: str,
+    format: Literal["pdf", "xlsx", "svg", "glb"] = Query("pdf"),
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Download design deliverables in 4 formats:
+    - pdf  : Báo giá VAT (ReportLab)
+    - xlsx : BOM Excel với formulas (openpyxl)
+    - svg  : Floor plan dimensioned (svgwrite)
+    - glb  : 3D scene binary glTF 2.0 (Three.js compatible)
+    """
+    # Validate UUID
+    try:
+        pid = UUID(design_id)
+    except (ValueError, TypeError):
+        raise HTTPException(404, "design_id không hợp lệ")
+
+    # Load design + verify ownership
+    result = await db.execute(select(Design).where(Design.id == pid))
+    d: Design | None = result.scalar_one_or_none()
+    if not d:
+        raise HTTPException(404, "Không tìm thấy thiết kế")
+    if d.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(403, "Bạn không có quyền tải thiết kế này")
+
+    # Reload BOQ items + renders eagerly
+    boq_q = await db.execute(select(BOQItem).where(BOQItem.design_id == pid))
+    boq_rows = boq_q.scalars().all()
+    rd_q = await db.execute(select(DesignRender).where(DesignRender.design_id == pid))
+    render_rows = rd_q.scalars().all()
+
+    # Build a unified design dict for generators
+    boq_items = [
+        {
+            "category": r.category,
+            "material": r.material,
+            "product_name": r.product_name,
+            "unit": r.unit,
+            "quantity": float(r.quantity) if r.quantity else 0,
+            "unit_price": int(r.unit_price) if r.unit_price else 0,
+            "total_price": int(r.total_price) if r.total_price else 0,
+            "order_status": r.order_status,
+        }
+        for r in boq_rows
+    ]
+    variants = [
+        {
+            "variant_idx": r.variant_idx,
+            "style_label": r.style_label,
+            "description": r.description,
+            "image_url": r.image_url,
+        }
+        for r in render_rows
+    ]
+
+    design_dict = {
+        "design_id": str(d.id),
+        "prompt": d.prompt,
+        "style": d.style,
+        "room_type": d.room_type,
+        "area_m2": float(d.area_m2) if d.area_m2 else None,
+        "budget_million": float(d.budget_million) if d.budget_million else None,
+        "variants": variants,
+        "boq_items": boq_items,
+        "boq_total": sum(b["total_price"] for b in boq_items),
+        "agent_output": d.ai_response or {},
+        "created_at": d.created_at.isoformat() if d.created_at else None,
+    }
+
+    user_dict = {
+        "full_name": getattr(current_user, "full_name", None),
+        "email": getattr(current_user, "email", None),
+        "phone": getattr(current_user, "phone", None),
+    }
+
+    # Dispatch to generator
+    short_id = str(d.id)[:8]
+    if format == "pdf":
+        from api.services.deliverables.pdf_generator import generate_quotation_pdf
+        data = generate_quotation_pdf(design_dict, user=user_dict)
+        return Response(
+            content=data,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="nexbuild-quotation-{short_id}.pdf"'},
+        )
+
+    if format == "xlsx":
+        from api.services.deliverables.excel_generator import generate_bom_xlsx
+        data = generate_bom_xlsx(design_dict, user=user_dict)
+        return Response(
+            content=data,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f'attachment; filename="nexbuild-bom-{short_id}.xlsx"'},
+        )
+
+    if format == "svg":
+        from api.services.deliverables.svg_generator import generate_floor_plan_svg
+        data = generate_floor_plan_svg(design_dict).encode("utf-8")
+        return Response(
+            content=data,
+            media_type="image/svg+xml",
+            headers={"Content-Disposition": f'attachment; filename="nexbuild-floorplan-{short_id}.svg"'},
+        )
+
+    if format == "glb":
+        from api.services.deliverables.glb_exporter import generate_scene_glb
+        data = generate_scene_glb(design_dict)
+        return Response(
+            content=data,
+            media_type="model/gltf-binary",
+            headers={"Content-Disposition": f'attachment; filename="nexbuild-scene-{short_id}.glb"'},
+        )
+
+    raise HTTPException(400, f"Format '{format}' không hỗ trợ")

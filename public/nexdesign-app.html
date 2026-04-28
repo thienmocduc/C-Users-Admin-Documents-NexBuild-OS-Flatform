@@ -133,7 +133,10 @@
               <button class="pt on" id="btnVoice" onclick="toggleVoice()">🎙️ Nói</button>
               <button class="pt on" onclick="this.classList.toggle('on')">📋 BOQ tự động</button>
               <button class="pt on" id="btnShop" onclick="this.classList.toggle('on')">🛍️ Shoppable</button>
-              <button class="pt" onclick="toast('Upload ảnh tham khảo')">📸 Ảnh tham khảo</button>
+              <button class="pt" id="btnHQ" title="Pipeline 4 giai đoạn — chậm hơn 3-5x nhưng chất lượng cao hơn rõ rệt" onclick="this.classList.toggle('on')">⭐ HQ Pipeline</button>
+              <button class="pt" onclick="document.getElementById('refImgInput').click()">📸 Ảnh tham khảo</button>
+              <input type="file" id="refImgInput" accept="image/*" style="display:none" onchange="onReferenceUpload(event)">
+              <button class="pt" id="refClearBtn" onclick="clearReferenceImage()" style="display:none">✕ Xoá ảnh</button>
               <button class="pt" onclick="toast('Upload file CAD/Revit — Tính năng Pro')">📐 BIM (Pro)</button>
             </div>
           </div>
@@ -193,7 +196,15 @@
           <button class="cv-btn active" id="btn-single" onclick="showSingle(0)">⛶ Toàn màn hình</button>
           <button class="cv-btn" onclick="startGenerate()">🔄 Tạo lại</button>
           <button class="cv-btn" id="refineBtn" onclick="openRefine(window.currentSingleIdx||0,VARIANT_LABELS[window.currentSingleIdx||0]||'Variant')" style="display:none;background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(99,102,241,.15));border-color:rgba(168,85,247,.4);color:var(--vio,#A855F7);font-weight:700">🔁 Refine</button>
-          <button class="cv-btn" onclick="toast('Tải xuống tất cả render')">⬇️ Tải xuống</button>
+          <div class="dl-group">
+            <button class="cv-btn dl-trigger" onclick="toggleDlMenu(event)">⬇️ Tải xuống ▾</button>
+            <div class="dl-menu" id="dlMenu">
+              <button onclick="downloadDeliverable('pdf')"><span>📄</span> PDF Báo giá VAT</button>
+              <button onclick="downloadDeliverable('xlsx')"><span>📊</span> Excel BOM (formulas)</button>
+              <button onclick="downloadDeliverable('svg')"><span>📐</span> SVG Mặt bằng</button>
+              <button onclick="downloadDeliverable('glb')"><span>🧊</span> GLB 3D Scene</button>
+            </div>
+          </div>
           <button class="cv-btn" id="shopBtn" onclick="toggleShoppable()" style="display:none">🛍️ Shoppable</button>
         </div>
 
@@ -734,6 +745,147 @@ let currentRefineRound=1;          // round counter
 let refineFeedbackHistory=[];      // history of feedback strings
 let refineTargetVariantIdx=0;      // which variant user picked to refine
 
+// ── PHASE 4: REFERENCE-GUIDED GENERATION ──
+let referenceAnalysis=null;     // last analysis result
+let referenceImageDataUri=null; // last uploaded image
+
+function onReferenceUpload(event){
+  const file=event.target.files && event.target.files[0];
+  if(!file) return;
+  if(file.size>5*1024*1024){ toast('Ảnh quá lớn (>5MB), vui lòng nén lại','error'); return; }
+  const reader=new FileReader();
+  reader.onload=function(e){
+    referenceImageDataUri=e.target.result;
+    document.getElementById('refClearBtn').style.display='inline-flex';
+    showReferenceBanner('⏳ Đang phân tích ảnh tham khảo...');
+    analyzeReferenceNow();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearReferenceImage(){
+  referenceImageDataUri=null;
+  referenceAnalysis=null;
+  document.getElementById('refImgInput').value='';
+  document.getElementById('refClearBtn').style.display='none';
+  hideReferenceBanner();
+  toast('Đã xoá ảnh tham khảo','info');
+}
+
+function showReferenceBanner(html){
+  let banner=document.getElementById('refBanner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='refBanner';
+    banner.style.cssText='margin:8px 0;padding:10px;background:linear-gradient(135deg,rgba(0,201,167,.1),rgba(14,165,233,.06));border:1px solid var(--c1);border-radius:10px;font-size:11px;color:var(--text);line-height:1.5';
+    const promptBox=document.querySelector('.prompt-box');
+    if(promptBox) promptBox.parentNode.insertBefore(banner, promptBox.nextSibling);
+  }
+  banner.innerHTML=html;
+  banner.style.display='block';
+}
+
+function hideReferenceBanner(){
+  const banner=document.getElementById('refBanner');
+  if(banner) banner.style.display='none';
+}
+
+async function analyzeReferenceNow(){
+  if(!referenceImageDataUri){ toast('Chưa có ảnh','error'); return; }
+  const userExtra=(document.getElementById('promptTxt').value||'').trim().substring(0,400);
+  try{
+    const res=await apiFetch('/design/analyze-reference',{
+      method:'POST',
+      body:JSON.stringify({image_data_uri:referenceImageDataUri, user_prompt:userExtra})
+    });
+    if(res && !res.error && res.enhanced_prompt){
+      referenceAnalysis=res;
+      const palette=(res.detected_palette||[]).map(c=>'<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:'+c+';margin:0 2px;vertical-align:middle;border:1px solid rgba(0,0,0,.1)"></span>'+c).join(' ');
+      const materials=(res.detected_materials||[]).slice(0,5).map(m=>'<span style="display:inline-block;background:var(--bg3);padding:2px 6px;border-radius:4px;margin:1px">'+m+'</span>').join(' ');
+      showReferenceBanner(
+        '<div style="display:flex;gap:10px;align-items:flex-start">'+
+          '<img src="'+referenceImageDataUri+'" style="width:60px;height:60px;border-radius:6px;object-fit:cover;flex-shrink:0">'+
+          '<div style="flex:1">'+
+            '<div style="font-weight:700;color:var(--c1);margin-bottom:4px">📸 Phân tích ảnh tham khảo</div>'+
+            '<div style="margin-bottom:6px"><b>Phong cách phát hiện:</b> '+(res.detected_style||'?')+'</div>'+
+            (palette?'<div style="margin-bottom:4px"><b>Palette:</b> '+palette+'</div>':'')+
+            (materials?'<div style="margin-bottom:6px"><b>Vật liệu:</b> '+materials+'</div>':'')+
+            '<div style="font-size:10px;color:var(--text2);margin-bottom:8px">'+(res.style_analysis||'').substring(0,200)+'</div>'+
+            '<button onclick="applyReferencePrompt()" style="padding:5px 10px;background:var(--grad);border:none;border-radius:6px;color:#fff;font-weight:700;font-size:11px;cursor:pointer">✓ Dùng prompt này</button>'+
+          '</div>'+
+        '</div>'
+      );
+      // Auto-select detected style in style grid
+      const detectedStyle=res.detected_style;
+      if(detectedStyle){
+        const STYLE_LABEL_MAP={modern:'Hiện đại',scandinavian:'Scandinavian',japandi:'Japandi',industrial:'Industrial',mediterranean:'Đông Dương',indochine:'Đông Dương',tropical_modern:'Hiện đại',wabi_sabi:'Wabi-Sabi',neo_classical:'Tân cổ điển'};
+        const lbl=STYLE_LABEL_MAP[detectedStyle];
+        if(lbl){
+          document.querySelectorAll('.sc').forEach(el=>{
+            const txt=el.querySelector('.sc-lbl')?.textContent;
+            if(txt===lbl){ document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on')); el.classList.add('on'); }
+          });
+        }
+      }
+      toast('✓ Đã phân tích ảnh tham khảo','success');
+    } else {
+      showReferenceBanner('<span style="color:var(--red)">⚠️ Không phân tích được ảnh — '+(res?.detail||res?.message||'lỗi không rõ')+'</span>');
+    }
+  }catch(e){
+    showReferenceBanner('<span style="color:var(--red)">⚠️ Lỗi kết nối — '+e.message+'</span>');
+  }
+}
+
+function applyReferencePrompt(){
+  if(!referenceAnalysis || !referenceAnalysis.enhanced_prompt){ toast('Chưa có phân tích','error'); return; }
+  document.getElementById('promptTxt').value=referenceAnalysis.enhanced_prompt;
+  toast('✓ Đã áp dụng prompt từ ảnh tham khảo','success');
+}
+
+// ── PHASE 6: DOWNLOAD DELIVERABLES ──
+function toggleDlMenu(event){
+  event.stopPropagation();
+  const m=document.getElementById('dlMenu');
+  m.classList.toggle('show');
+  document.addEventListener('click',function close(){
+    m.classList.remove('show');
+    document.removeEventListener('click',close);
+  });
+}
+async function downloadDeliverable(format){
+  if(!currentDesignId){ toast('Hãy tạo thiết kế trước!','error'); return; }
+  document.getElementById('dlMenu').classList.remove('show');
+  const labels={pdf:'PDF Báo giá',xlsx:'Excel BOM',svg:'SVG Mặt bằng',glb:'GLB 3D Scene'};
+  toast('⏳ Đang tạo '+labels[format]+'...','info');
+  try{
+    // Use API_BASE + token (apiFetch returns JSON, here we need binary)
+    const token=localStorage.getItem('nxb_token');
+    const url=(window.NXB_API_BASE||'/api/v1')+'/design/'+currentDesignId+'/download?format='+format;
+    const res=await fetch(url,{headers:{'Authorization':'Bearer '+(token||'')}});
+    if(!res.ok){
+      const err=await res.text();
+      toast('❌ '+(err||'Lỗi tải file'),'error');
+      return;
+    }
+    const blob=await res.blob();
+    // Extract filename from Content-Disposition or default
+    const cd=res.headers.get('Content-Disposition')||'';
+    const m=cd.match(/filename="([^"]+)"/);
+    const filename=m?m[1]:('nexbuild-design.'+format);
+    // Trigger download
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    toast('✓ Đã tải '+filename,'success');
+  }catch(e){
+    toast('❌ Lỗi mạng: '+e.message,'error');
+  }
+}
+
 // ── PHASE 5: REFINE MODAL ──
 function openRefine(variantIdx, variantLabel){
   if(!currentDesignId){ toast('Hãy tạo thiết kế trước!','error'); return; }
@@ -866,6 +1018,7 @@ function startGenerate(){
     applyLdStep(stepIdx);
   },4000);
   // Build payload — multi-discipline aware
+  const hqOn=document.getElementById('btnHQ')?.classList.contains('on') || false;
   const payload={
     prompt:p,
     style:styleKey,
@@ -873,7 +1026,8 @@ function startGenerate(){
     area_m2:area,
     budget_million:budget,
     auto_boq:true,
-    discipline:currentDiscipline
+    discipline:currentDiscipline,
+    high_quality:hqOn
   };
   if(currentDiscipline!=='interior'){
     payload.location_province=document.getElementById('locProv')?.value||'HCM';

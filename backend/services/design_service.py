@@ -83,6 +83,7 @@ async def create_design(
     location_province: Optional[str] = None,
     floors: Optional[int] = None,
     soil_type: Optional[str] = None,
+    high_quality: bool = False,
 ) -> dict:
     """Create a design — dispatches to the right discipline agent."""
 
@@ -124,7 +125,36 @@ async def create_design(
     )
 
     try:
-        ai_result = await agent.generate(agent_request)
+        if high_quality and discipline == "interior":
+            # Phase 3 — Multi-stage pipeline (only for interior currently)
+            from api.services.multistage_service import run_multistage
+            multi_result = await run_multistage(
+                brief=prompt,
+                request_meta={
+                    "area_m2": area_m2,
+                    "style": style,
+                    "room_type": room_type,
+                    "budget_million": budget_million,
+                },
+                skip_render=False,
+            )
+            if multi_result.get("error"):
+                # Fall back to single-shot
+                ai_result = await agent.generate(agent_request)
+                ai_result["multistage_fallback_reason"] = multi_result.get("message")
+            else:
+                # Run single-shot in PARALLEL to get BOQ + scene_3d (multistage doesn't produce these)
+                single_shot = await agent.generate(agent_request)
+                # Merge: variants from multistage (have richer prompts + critique + renders),
+                # BOQ + scene_3d from single-shot
+                ai_result = {
+                    **single_shot,
+                    "variants": multi_result["variants"],
+                    "prompt_enhanced": multi_result.get("prompt_enhanced", single_shot.get("prompt_enhanced", prompt)),
+                    "multistage": multi_result.get("multistage"),
+                }
+        else:
+            ai_result = await agent.generate(agent_request)
     except Exception as e:
         design.status = "failed"
         return {"error": True, "message": f"AI generation failed: {e}"}
