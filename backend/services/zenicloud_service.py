@@ -45,31 +45,91 @@ def is_configured() -> bool:
 
 
 # ─── Helpers ────────────────────────────────────────────────────
-_CODE_FENCE_RE = re.compile(r"^\s*```(?:json|JSON)?\s*\n?(.*?)\n?\s*```\s*$", re.DOTALL)
+# Tolerant regex — captures content inside ```...``` even if:
+#   • Text appears AFTER closing fence (extra prose)
+#   • Closing fence is MISSING (truncated output)
+#   • Language tag is "json" or absent
+_CODE_FENCE_OPEN_RE = re.compile(r"```(?:json|JSON)?\s*\n?", re.IGNORECASE)
+_CODE_FENCE_CLOSE_RE = re.compile(r"\n?\s*```")
 
 
 def strip_code_fence(text: str) -> str:
-    """Strip ```json ... ``` wrapper that Gemini sometimes adds."""
+    """Strip ```json ... ``` wrapper. Tolerant of trailing text + missing close."""
     if not text:
         return ""
-    m = _CODE_FENCE_RE.match(text.strip())
-    return m.group(1).strip() if m else text.strip()
+    s = text.strip()
+    # Find opening fence
+    m_open = _CODE_FENCE_OPEN_RE.search(s)
+    if not m_open:
+        return s  # no fence, return as-is
+    inner_start = m_open.end()
+    # Find closing fence after the opening
+    m_close = _CODE_FENCE_CLOSE_RE.search(s, inner_start)
+    inner_end = m_close.start() if m_close else len(s)
+    return s[inner_start:inner_end].strip()
+
+
+def _balanced_json_block(text: str) -> str | None:
+    """Extract first balanced {...} block from text (handles nested braces)."""
+    if not text:
+        return None
+    start = text.find("{")
+    if start < 0:
+        return None
+    depth = 0
+    in_str = False
+    escape = False
+    for i in range(start, len(text)):
+        c = text[i]
+        if escape:
+            escape = False
+            continue
+        if c == "\\" and in_str:
+            escape = True
+            continue
+        if c == '"':
+            in_str = not in_str
+            continue
+        if in_str:
+            continue
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : i + 1]
+    return None  # unbalanced — likely truncated
 
 
 def parse_json_response(text: str) -> dict | None:
-    """Parse JSON from LLM output, handling code fences + extra prose."""
+    """Parse JSON from LLM output. Multi-strategy:
+    1. Strip ```...``` fence and try direct parse.
+    2. If fail, find first balanced {...} block and try.
+    3. Last resort: greedy match.
+    """
+    if not text:
+        return None
+    # Strategy 1: strip fence + direct parse
     cleaned = strip_code_fence(text)
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError:
-        # Try to find first JSON object in the text
-        m = re.search(r"\{.*\}", cleaned, re.DOTALL)
-        if m:
-            try:
-                return json.loads(m.group(0))
-            except json.JSONDecodeError:
-                return None
-        return None
+        pass
+    # Strategy 2: balanced brace extraction
+    block = _balanced_json_block(cleaned)
+    if block:
+        try:
+            return json.loads(block)
+        except json.JSONDecodeError:
+            pass
+    # Strategy 3: greedy regex (last resort, may fail on nested)
+    m = re.search(r"\{.*\}", cleaned, re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group(0))
+        except json.JSONDecodeError:
+            return None
+    return None
 
 
 # ─── Text completion ────────────────────────────────────────────
@@ -269,7 +329,14 @@ async def embed(
                 logger.error("[zeni] /ai/embed HTTP %d: %s", r.status_code, r.text[:300])
                 return []
             data = r.json()
-            return data.get("embeddings", []) or []
+            raw = data.get("embeddings", []) or []
+            # ZeniCloud shape: [{"index": 0, "vector": [...], "tokens": N}, ...]
+            # Extract .vector and order by .index for stable mapping back to texts.
+            if raw and isinstance(raw[0], dict) and "vector" in raw[0]:
+                ordered = sorted(raw, key=lambda e: e.get("index", 0))
+                return [e.get("vector", []) for e in ordered]
+            # Fallback: assume already list[list[float]] (older API or alt provider)
+            return raw
     except httpx.HTTPError as e:
         logger.exception("[zeni] embed error: %s", e)
         return []
